@@ -33,6 +33,7 @@
     </SccAuxPath>
     <SccProvider>
     </SccProvider>
+    <UseGlobalApplicationHostFile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -102,58 +103,132 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="cassettes\aster64.C10" />
-    <Content Include="cassettes\block_drop.C10" />
-    <Content Include="cassettes\breakout.c10" />
-    <Content Include="cassettes\checkers.c10" />
-    <Content Include="cassettes\defend.C10" />
-    <Content Include="cassettes\Demon_Attack.C10" />
-    <Content Include="cassettes\Dragon_castles.C10" />
-    <Content Include="cassettes\eggs.c10" />
-    <Content Include="cassettes\FREEWAY.C10" />
-    <Content Include="cassettes\horse.c10" />
-    <Content Include="cassettes\kaleidoa.c10" />
-    <Content Include="cassettes\lander.c10" />
-    <Content Include="cassettes\leapfrog.c10" />
-    <Content Include="cassettes\minicalc.c10" />
-    <Content Include="cassettes\pong.c10" />
-    <Content Include="cassettes\roadrace.C10" />
-    <Content Include="cassettes\spirals.c10" />
+    <Content Include="cassettes\aster64.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\block_drop.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\breakout.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\checkers.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\defend.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\Demon_Attack.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\Dragon_castles.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\eggs.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\FREEWAY.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\horse.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\kaleidoa.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\lander.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\leapfrog.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\minicalc.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\pong.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\roadrace.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\spirals.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Content Include="SaveCassette.ashx" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="cassettes\Kaleidoscope.c10" />
-    <Content Include="cassettes\Pac-Man.c10" />
-    <Content Include="cassettes\RG2LIFE.c10" />
-    <Content Include="cassettes\Tetris.c10" />
+    <Content Include="cassettes\Kaleidoscope.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\Pac-Man.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\RG2LIFE.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\Tetris.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="cassettes\pinball.c10" />
+    <Content Include="cassettes\pinball.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="cassettes\BERZERK.C10" />
-    <Content Include="cassettes\CAVE3D.C10" />
-    <Content Include="cassettes\KLONDIKE.C10" />
-    <Content Include="cassettes\MAHJONG.C10" />
-    <Content Include="cassettes\PITMAN.C10" />
+    <Content Include="cassettes\BERZERK.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\CAVE3D.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\KLONDIKE.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\MAHJONG.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\PITMAN.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="cassettes\CHESS.C10" />
-    <Content Include="cassettes\FROG.C10" />
-    <Content Include="cassettes\INVADER.C10" />
-    <Content Include="cassettes\LANDERJG.C10" />
-    <Content Include="cassettes\PENGUINO.C10" />
-    <Content Include="cassettes\ROVER.C10" />
+    <Content Include="cassettes\CHESS.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\FROG.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\INVADER.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\LANDERJG.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\PENGUINO.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="cassettes\ROVER.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="cassettes\CRAWL.C10" />
+    <Content Include="cassettes\CRAWL.C10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="cassettes\SpaceAssault.c10" />
+    <Content Include="cassettes\SpaceAssault.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="cassettes\MC_Bouncy_Ball.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include=".gitignore" />
     <None Include="Properties\PublishProfiles\Profile1.pubxml" />
   </ItemGroup>
   <PropertyGroup>
