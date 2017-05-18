@@ -5,5 +5,5 @@ Browser based emulation of the Motorola MC6803 CPU and MC6847 VDG. HTML Canvas s
 
 ![alt tag](http://upload.wikimedia.org/wikipedia/commons/thumb/5/59/TRS-80_MC-10_Microcomputer.jpg/250px-TRS-80_MC-10_Microcomputer.jpg)
 
-###Try It!
+### Try It!
 http://mc-10.com
