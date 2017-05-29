@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributions by Greg Dionne
 5/18/17 - audio processing
 5/21/17 - video mode support
-5/28/17 - float address bus on unconnected memory (0x0020-0x007F,0x0100-0x3fff)
+5/28/17 - float address bus on unconnected memory (0x002??0-0x007F,0x0100-0x4000)
         - properly support video colors in SG6 with restricted MC6847 CSS pin.
 */
 
@@ -1840,8 +1840,8 @@ MC10.MC6803.prototype = {
             return this.memory[address];
         }
 
-        //is it the keybord input?
-        if (address == 0xbfff) {
+        //is it the keybord input?  [normally read from 0xbfff]
+        if (address >= 0x9000 && address <= 0xbfff) {
             var ret =
                 (~this.memory[0x02] & 0x01 ? this.port1[0] : 0xff) &
                 (~this.memory[0x02] & 0x02 ? this.port1[1] : 0xff) &
@@ -2027,8 +2027,8 @@ MC10.MC6803.prototype = {
             return;
         }
 
-        //is it VDG and SOUND O/P?
-        if (address == 0xbfff) {
+        //is it VDG and SOUND O/P? [normally written to 0xbfff]
+        if (address >= 0x9000 && address < 0xc000) {
             if (this.mc10.vdg.updateChip(value)) {
                 //redraw entire framebuffer on change of palette or video mode
                 if (this.mc10.vdg.vramIs4k) {
