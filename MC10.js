@@ -20,8 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributions by Greg Dionne
 5/18/17 - audio processing
 5/21/17 - video mode support
-5/28/17 - float address bus on unconnected memory (0x002??0-0x007F,0x0100-0x4000)
+5/28/17 - float address bus on unconnected memory (0x0020-0x007F,0x0100-0x4000)
         - properly support video colors in SG6 with restricted MC6847 CSS pin.
+        - add partial support for reading keyboard strobe from 0x9000-0xbfff.
 */
 
 function FiniteBuffer(n) {
@@ -1840,8 +1841,13 @@ MC10.MC6803.prototype = {
             return this.memory[address];
         }
 
-        //is it the keybord input?  [normally read from 0xbfff]
-        if (address >= 0x9000 && address <= 0xbfff) {
+        // is it the keybord input?  [partial emulation here, normally read from 0xbfff]
+        // - to see this on a real MC-10, POKE 17032,0 will provide a memory dump.
+        // - to see this on the emulator, POKE 17032,95
+        // pressing the keys affect the video display of reads from 0x9000-0xbfff with 16K RAM.  
+        // Note that we haven't completely emulated the return yet.
+                
+        if (0x9000 <= address && address <= 0xbfff) {
             var ret =
                 (~this.memory[0x02] & 0x01 ? this.port1[0] : 0xff) &
                 (~this.memory[0x02] & 0x02 ? this.port1[1] : 0xff) &
