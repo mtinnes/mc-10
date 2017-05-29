@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Contributions by Greg Dionne
 5/18/17 - audio processing
 5/21/17 - video mode support
-5/28/17 - float address bus on unconnected memory (0x0030-0x007F,0x0100-0x4000)
+5/28/17 - float address bus on unconnected memory (0x0020-0x007F,0x0100-0x3fff)
         - properly support video colors in SG6 with restricted MC6847 CSS pin.
 */
 
