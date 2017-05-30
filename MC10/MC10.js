@@ -1,4 +1,4 @@
-﻿/*
+/*
 MC10, based on work by Chris Mennie
 Copyright (C) 2012 Mike Tinnes [www.catalystllc.biz]
 
@@ -17,8 +17,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
-5/18/17 - Contributions by Greg Dionne related to audio processing
-5/21/17 - Contributions by Greg Dionne for video mode support for SG6
+Contributions by Greg Dionne
+5/18/17 - audio processing
+5/21/17 - video mode support
+5/28/17 - float address bus on unconnected memory (0x0020-0x007F,0x0100-0x4000)
+        - properly support video colors in SG6 with restricted MC6847 CSS pin.
+        - add partial support for reading keyboard strobe from 0x9000-0xbfff.
 */
 
 function FiniteBuffer(n) {
@@ -1837,8 +1841,13 @@ MC10.MC6803.prototype = {
             return this.memory[address];
         }
 
-        //is it the keybord input?
-        if (address == 0xbfff) {
+        // is it the keybord input?  [partial emulation here, normally read from 0xbfff]
+        // - to see this on a real MC-10, POKE 17032,0 will provide a memory dump.
+        // - to see this on the emulator, POKE 17032,95
+        // pressing the keys affect the video display of reads from 0x9000-0xbfff with 16K RAM.  
+        // Note that we haven't completely emulated the return yet.
+                
+        if (0x9000 <= address && address <= 0xbfff) {
             var ret =
                 (~this.memory[0x02] & 0x01 ? this.port1[0] : 0xff) &
                 (~this.memory[0x02] & 0x02 ? this.port1[1] : 0xff) &
@@ -1939,7 +1948,9 @@ MC10.MC6803.prototype = {
                     return 0x00;
             }
         }
-        return 0x00; //is this correct?
+
+        // nothing on the bus.  Just let it grab back the address line.
+        return 0xff & address;
     },
 
     fetchAddress: function () {
@@ -2004,10 +2015,10 @@ MC10.MC6803.prototype = {
             this.memory[address] = value;
             if (this.mc10.vdg.vramIs4k) {
                 if (address < 0x5000) {
-                    this.mc10.vdg.updateDisplay(address & 0x0fff, value);
-                    if (this.mc10.vdg.graphicsMode == 11 || this.mc10.vdg.graphicsMode == 15) {
-                        this.mc10.vdg.updateDisplay(address & 0x0fff | 0x1000, value);
-                    }
+                   this.mc10.vdg.updateDisplay(address & 0x0fff, value);
+                   if (this.mc10.vdg.graphicsMode == 11 || this.mc10.vdg.graphicsMode == 15) {
+                       this.mc10.vdg.updateDisplay(address & 0x0fff | 0x1000, value);
+                   }
                 }
             } else {
                 this.mc10.vdg.updateDisplay(address - 0x4000, value);
@@ -2022,8 +2033,8 @@ MC10.MC6803.prototype = {
             return;
         }
 
-        //is it VDG and SOUND O/P?
-        if (address == 0xbfff) {
+        //is it VDG and SOUND O/P? [normally written to 0xbfff]
+        if (address >= 0x9000 && address < 0xc000) {
             if (this.mc10.vdg.updateChip(value)) {
                 //redraw entire framebuffer on change of palette or video mode
                 if (this.mc10.vdg.vramIs4k) {
@@ -2735,9 +2746,9 @@ MC10.MC6847.Palette = [
     [0xF0, 0x88, 0x28], // CSS1 Orange
     [0x00, 0x00, 0x00], // Black
     [0x10, 0x60, 0x10], // Dark  Green Text
-    [0x80, 0x40, 0x10], // Dark  Orange Text
+    [0x78, 0x50, 0x20], // Dark  Orange Text
     [0x28, 0xE0, 0x28], // Light Green Text
-    [0xF8, 0x98, 0x40], // Light Orange Text
+    [0xF0, 0xB0, 0x40], // Light Orange Text
 ];
 
 MC10.MC6847.prototype = {
@@ -2842,12 +2853,12 @@ MC10.MC6847.prototype = {
         // 13   128x192x2 (RG3)
         // 15   256x192x2 (RG6)
 
-        var pixPerByte = 8;
-        var hPixSize = this.graphicsMode == 15 ? 2 : 4;
+        var pixPerByte  = 8;
+        var hPixSize    = this.graphicsMode == 15 ? 2 : 4;
         var bytesPerRow = this.graphicsMode == 15 ? 32 : 16;
-        var vPixSize = this.graphicsMode == 12 ? 6 :
-            this.graphicsMode == 14 ? 4 :
-                2;
+        var vPixSize    = this.graphicsMode == 12 ? 6 :
+                          this.graphicsMode == 14 ? 4 :
+                                                    2;
 
         var screenX = (pos % bytesPerRow) * hPixSize * pixPerByte;
         var screenY = (pos - pos % bytesPerRow) / bytesPerRow * vPixSize;
@@ -2859,11 +2870,11 @@ MC10.MC6847.prototype = {
         var tval = val & 0xff;
 
         for (var i = 0; i < pixPerByte; i++) {
-            var color = tval & 0x80 ? bgColor : fgColor;
+            var color = tval&0x80 ? bgColor : fgColor;
             tval <<= 1;
             for (var x = 0; x < hPixSize; x++) {
                 for (var y = 0; y < vPixSize; y++) {
-                    var idx0 = ((screenY + y) * 512 + screenX + x + i * hPixSize) * 4;
+                    var idx0 = ((screenY + y) * 512 + screenX + x + i*hPixSize) * 4;
                     data[idx0] = MC10.MC6847.Palette[color][0];
                     data[idx0 + 1] = MC10.MC6847.Palette[color][1];
                     data[idx0 + 2] = MC10.MC6847.Palette[color][2];
@@ -2878,12 +2889,12 @@ MC10.MC6847.prototype = {
         // 9    128x96x4 (CG3)
         // 11   128x192x4 (CG6)
 
-        var pixPerByte = 4;
-        var hPixSize = this.graphicsMode == 8 ? 8 : 4;
+        var pixPerByte  = 4;
+        var hPixSize    = this.graphicsMode == 8 ? 8 : 4;
         var bytesPerRow = this.graphicsMode == 8 ? 16 : 32;
-        var vPixSize = this.graphicsMode == 11 ? 2 :
-            this.graphicsMode == 9 ? 4 :
-                6;
+        var vPixSize    = this.graphicsMode == 11 ? 2 :
+                          this.graphicsMode ==  9 ? 4 :
+                                                    6;
 
         var screenX = (pos % bytesPerRow) * hPixSize * pixPerByte;
         var screenY = (pos - pos % bytesPerRow) / bytesPerRow * vPixSize;
@@ -2897,7 +2908,7 @@ MC10.MC6847.prototype = {
             tval <<= 2;
             for (var x = 0; x < hPixSize; x++) {
                 for (var y = 0; y < vPixSize; y++) {
-                    var idx0 = ((screenY + y) * 512 + screenX + x + i * hPixSize) * 4;
+                    var idx0 = ((screenY + y) * 512 + screenX + x + i*hPixSize) * 4;
                     data[idx0] = MC10.MC6847.Palette[color][0];
                     data[idx0 + 1] = MC10.MC6847.Palette[color][1];
                     data[idx0 + 2] = MC10.MC6847.Palette[color][2];
@@ -2914,16 +2925,16 @@ MC10.MC6847.prototype = {
         var color;
 
         if (val <= 0x7f) {
-            bgColorIndex = 9 + this.palette + ((val & 0x40) >> 5);
-            fgColorIndex = 11 + this.palette - ((val & 0x40) >> 5);
-
+            bgColorIndex =  9 + this.palette + ((val & 0x40)>>5);
+            fgColorIndex = 11 + this.palette - ((val & 0x40)>>5);
+            
             for (var i = 0; i < 12; i++) {
-                block[i] = this.graphicsMode & 1 ? val & 0x7f :
-                    MC10.MC6847.SG4CharacterSet[val & 0x3f][i];
+                block[i] = this.graphicsMode & 1 ? val & 0x7f : 
+                                                   MC10.MC6847.SG4CharacterSet[val & 0x3f][i];
             }
         } else if (this.graphicsMode & 1) {
             bgColorIndex = 8;
-            fgColorIndex = 2 + ((val & 0x40) >> 6);
+            fgColorIndex = ((val & 0x40) >> 6) + (this.palette ? 6 : 2);
 
             for (var i = 0; i < 12; i++) {
                 block[i] = MC10.MC6847.SG6Rectangle[val & 0x3f][i];
