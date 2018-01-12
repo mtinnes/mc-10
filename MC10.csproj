@@ -225,6 +225,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="cassettes\ASTROIDS.c10">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="cassettes\MC_Bouncy_Ball.c10">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
