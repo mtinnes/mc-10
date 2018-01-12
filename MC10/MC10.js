@@ -2267,12 +2267,7 @@ MC10.MC6803.prototype = {
     },
 
     negate: function (first) {
-        first &= 0xff;
-        var result = ((first ^ 0xff) + 1) & 0xff;
-        this.set8NZ(result);
-        this.F_OVERFLOW = (result == 0x80) ? 1 : 0;
-        this.F_CARRY = (result == 0x00) ? 1 : 0;
-        return (result & 0xff);
+        return this.subtract(0,first);
     },
 
     or: function (first, second) {
