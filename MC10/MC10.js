@@ -23,6 +23,8 @@ Contributions by Greg Dionne
 5/28/17 - float address bus on unconnected memory (0x0020-0x007F,0x0100-0x4000)
         - properly support video colors in SG6 with restricted MC6847 CSS pin.
         - add partial support for reading keyboard strobe from 0x9000-0xbfff.
+1/10/17 - fix carry on negate instructions
+2/16/17 - use direct page address for BASIC load start address
 */
 
 function FiniteBuffer(n) {
@@ -261,8 +263,8 @@ MC10.prototype = {
             console.debug("EXEC ADDR: " + fi.startAddress);
             this.cpu.memory[0x421F] = (fi.startAddress >> 8);
             this.cpu.memory[0x4220] = (fi.startAddress & 0xff);
-        } else if (fi.fileType == 0) { //if we're loading a basic program, we need to fudge the start and load addresses
-            fi.loadAddress = 0x4346;
+        } else if (fi.fileType == 0) { //if we're loading a basic program, we need to fetch the start and load addresses
+            fi.loadAddress = (this.cpu.memory[0x93] << 8) + this.cpu.memory[0x94];
         }
 
         idx = this.readLeader(dv, idx);
@@ -272,7 +274,7 @@ MC10.prototype = {
 
         var len = 0;
         while (1) {
-            var dataBlock = this.readDataBlock(dv, idx, fi.startAddress + len, fi.loadAddress + len);
+            var dataBlock = this.readDataBlock(dv, idx, fi.loadAddress + len);
             if (dataBlock == -1) {
                 return;
             }
@@ -290,10 +292,7 @@ MC10.prototype = {
         //update other basic areas if need be..
         //NOTE: totalBytes MIGHT BE OFF BY ONE
         if (fi.fileType == 0) {
-            len += 0x4346;
-
-            this.cpu.memory[0x93] = 0x43;
-            this.cpu.memory[0x94] = 0x46;
+            len += fi.loadAddress;
             this.cpu.memory[0x95] = len >> 8;
             this.cpu.memory[0x96] = len & 0xff;
         }
@@ -338,7 +337,7 @@ MC10.prototype = {
         return idx - 1;
     },
 
-    readDataBlock: function (dv, idx, startAddress, loadAddress) {
+    readDataBlock: function (dv, idx, loadAddress) {
         var b = dv[idx++];
         if (b != 0x3c) {
             console.debug("invalid cassette file");
