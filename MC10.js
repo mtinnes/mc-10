@@ -82,11 +82,13 @@ var MC10 = function (opts) {
         }
     }
     this.maxRam = this.opts.maxRam;
+    this.clockRate = 890000;
     this.frameTime = Math.round(1000 / this.opts.preferredFrameRate);
     this.actualFrameRate = 1000 / this.frameTime;
     this.cpu = new MC10.MC6803(this);
     this.vdg = new MC10.MC6847(this);
     this.kbd = new MC10.KBD(this);
+    this.cassette = new MC10.Cassette(this);
 };
 
 // BASIC ROM
@@ -127,16 +129,21 @@ MC10.prototype = {
 
     frame: function () {
         var cpu = this.cpu;
-        var breakon = 890000 / this.actualFrameRate; // .89 MHz / NTSC 60 Hz
+        var breakon = this.clockRate / this.actualFrameRate;
         var cycles = 0;
         while (cycles < breakon) {
             var cnt = cpu.emulate();
+            this.cassette.advance(cnt);
             cycles += cnt;
             for (var i = 0; i < cnt; i++) {
                 this.vdg.updateAudio();
             }
         }
         this.vdg.paintFrame();
+    },
+
+    record: function (autoStop) {
+        this.cassette.recordC10(autoStop);  
     },
 
     save: function (fname) {
@@ -263,8 +270,8 @@ MC10.prototype = {
             console.debug("EXEC ADDR: " + fi.startAddress);
             this.cpu.memory[0x421F] = (fi.startAddress >> 8);
             this.cpu.memory[0x4220] = (fi.startAddress & 0xff);
-        } else if (fi.fileType == 0) { //if we're loading a basic program, we need to fetch the start and load addresses
-            fi.loadAddress = (this.cpu.memory[0x93] << 8) + this.cpu.memory[0x94];
+        } else if (fi.fileType == 0) { //if we're loading a basic program, we need to fudge the start and load addresses
+            fi.loadAddress = (this.cpu.memory[0x93]<<8) + this.cpu.memory[0x94];
         }
 
         idx = this.readLeader(dv, idx);
@@ -292,7 +299,7 @@ MC10.prototype = {
         //update other basic areas if need be..
         //NOTE: totalBytes MIGHT BE OFF BY ONE
         if (fi.fileType == 0) {
-            len += fi.loadAddress;
+            len += (this.cpu.memory[0x93]<<8) + this.cpu.memory[0x94];
             this.cpu.memory[0x95] = len >> 8;
             this.cpu.memory[0x96] = len & 0xff;
         }
@@ -609,6 +616,21 @@ MC10.MC6803.prototype = {
         //        }
 
         var opcode = this.fetchOpCode();
+
+        if (this.mc10.cassette.patchROM) {
+            if (lastpc == 0xff22) {
+                this.F_CARRY = this.mc10.cassette.getC10bit();
+                opcode = 0x39;
+            } else if (lastpc > 0xff2c && lastpc <= 0xff98) {
+                opcode = 0x39;
+            } else if (lastpc == 0xfd03 && this.mc10.cassette.recording) {
+                this.mc10.cassette.recordC10byte(this.REG_A);
+                opcode = 0x39;
+            } else if (lastpc == 0xfc8a && this.mc10.cassette.recording) {
+                this.mc10.cassette.saveRecord();
+                opcode = 0x39;
+            }
+        }
 
         if (opcode in this.optable) {
             var cycles = this.optable[opcode]();
@@ -1025,9 +1047,6 @@ MC10.MC6803.prototype = {
         //NEGB	
         this.optable[0x50] = function () { self.memmode = self.INHERENT; self.NEGB(); return 2; };
 
-        //NOP	
-        this.optable[0x01] = function () { self.memmode = self.INHERENT; self.NOP(); return 2; };
-
         //NGC	
         this.optable[0x62] = function () { self.memmode = self.INDEX; self.NGC(); return 6; };
         this.optable[0x72] = function () { self.memmode = self.EXTENDED; self.NGC(); return 6; };
@@ -1038,6 +1057,9 @@ MC10.MC6803.prototype = {
         //NGCB	
         this.optable[0x52] = function () { self.memmode = self.INHERENT; self.NGCB(); return 2; };
         
+        //NOP	
+        this.optable[0x01] = function () { self.memmode = self.INHERENT; self.NOP(); return 2; };
+
         //ORAA	
         this.optable[0x8a] = function () { self.memmode = self.IMMEDIATE; self.ORAA(); return 2; };
         this.optable[0x9a] = function () { self.memmode = self.DIRECT; self.ORAA(); return 3; };
@@ -1597,8 +1619,6 @@ MC10.MC6803.prototype = {
     NEGB: function () {
         this.REG_B[0] = this.negate(this.REG_B[0]);
     },
-    NOP: function () {
-    },
     NGC: function () {
         var scratch = this.negateCarry(this.fetchData());
         this.setLastRead(scratch);
@@ -1608,6 +1628,8 @@ MC10.MC6803.prototype = {
     },
     NGCB: function () {
         this.REG_B[0] = this.negateCarry(this.REG_B[0]);
+    },
+    NOP: function () {
     },
     ORAA: function () {
         this.REG_A[0] = this.or(this.REG_A[0], this.fetchData());
@@ -1863,15 +1885,16 @@ MC10.MC6803.prototype = {
         // Note that we haven't completely emulated the return yet.
                 
         if (0x9000 <= address && address <= 0xbfff) {
+            var enb = this.memory[0x00] & ~this.memory[0x02];
             var ret =
-                (~this.memory[0x02] & 0x01 ? this.port1[0] : 0xff) &
-                (~this.memory[0x02] & 0x02 ? this.port1[1] : 0xff) &
-                (~this.memory[0x02] & 0x04 ? this.port1[2] : 0xff) &
-                (~this.memory[0x02] & 0x08 ? this.port1[3] : 0xff) &
-                (~this.memory[0x02] & 0x10 ? this.port1[4] : 0xff) &
-                (~this.memory[0x02] & 0x20 ? this.port1[5] : 0xff) &
-                (~this.memory[0x02] & 0x40 ? this.port1[6] : 0xff) &
-                (~this.memory[0x02] & 0x80 ? this.port1[7] : 0xff);
+                (enb & 0x01 ? this.port1[0] : 0xff) &
+                (enb & 0x02 ? this.port1[1] : 0xff) &
+                (enb & 0x04 ? this.port1[2] : 0xff) &
+                (enb & 0x08 ? this.port1[3] : 0xff) &
+                (enb & 0x10 ? this.port1[4] : 0xff) &
+                (enb & 0x20 ? this.port1[5] : 0xff) &
+                (enb & 0x40 ? this.port1[6] : 0xff) &
+                (enb & 0x80 ? this.port1[7] : 0xff);
             return ret;
         }
         //is it an internal register?
@@ -1886,16 +1909,17 @@ MC10.MC6803.prototype = {
 
                 case 0x03: //Port 2 Data Register (Printer/Cassette and Keyboard)
                     {
+                        var enb = this.memory[0x01];
                         var ret =
                             (~this.memory[0x02] & 0x01 ? this.port2[0] : 0xff) &
-                            (~this.memory[0x02] & 0x02 ? this.port2[1] : 0xff) &
+                            (                     0x02 ? this.port2[1] : 0xff) &
                             (~this.memory[0x02] & 0x04 ? this.port2[2] : 0xff) &
-                            (~this.memory[0x02] & 0x08 ? this.port2[3] : 0xff) &
-                            (~this.memory[0x02] & 0x10 ? this.port2[4] : 0xff) &
-                            (~this.memory[0x02] & 0x20 ? this.port2[5] : 0xff) &
-                            (~this.memory[0x02] & 0x40 ? this.port2[6] : 0xff) &
+                            (                     0x08 ? this.port2[3] : 0xff) &
+                            (                     0x10 ? this.port2[4] : 0xff) &
+                            (                     0x20 ? this.port2[5] : 0xff) &
+                            (                     0x40 ? this.port2[6] : 0xff) &
                             (~this.memory[0x02] & 0x80 ? this.port2[7] : 0xff);
-                        return ret & ~(0x04); // printer status bit on
+                        return ret;
                     }
                 case 0x04: //External Memory
                 case 0x05: //External Memory
@@ -2994,20 +3018,9 @@ MC10.MC6847.prototype = {
         }
     },
 
-    processAudio2: function (e) {
-        var data = e.outputBuffer.getChannelData(0);
-        var phaseIncrement = 2 * Math.PI * this.frequency / this.sampleRate;
-
-        for (var i = 0; i < data.length; ++i) {
-            var val = 0.1 * Math.sin(this.currentPhase);
-            data[i] = val;
-            this.currentPhase += phaseIncrement;
-        }
-    },
-
     processAudio: function (e) {
         var data = e.outputBuffer.getChannelData(0);
-        var abufRate = 890000;
+        var abufRate = this.mc10.clockRate;
         var cutoffFreq = 8000; // 8 kHz cutoff
         var droop = Math.exp(-cutoffFreq / abufRate);
         var sampleValue = this.sampleValue;
@@ -3160,5 +3173,110 @@ MC10.KBD.prototype = {
 
     keyPress: function (evt) {
 
+    }
+}
+
+MC10.Cassette = function (mc10) {
+    this.mc10 = mc10;
+    this.recording = false;
+    this.sampleRate = 44100;
+    this.sampleBuffer = new Float32Array(0);
+    this.sampleTime = 0;
+    this.c10buffer = new Array(0);
+    this.patchROM = false;
+}
+
+MC10.Cassette.prototype = {
+    playAudio: function (sampleRate, pcmSamples) {
+        console.log("loading " + pcmSamples.length + " samples at " + sampleRate + " Hz")
+        this.sampleRate = sampleRate;
+        this.sampleBuffer = pcmSamples.slice();
+        this.sampleTime = 0;
+        this.acfilter();
+    },
+
+    acfilter: function () {
+        var lastLevel = 0;
+        var droop = Math.exp(-100 / this.sampleRate);
+        for (var i=0; i<this.sampleBuffer.length; i++) {
+            lastLevel = droop*(this.sampleBuffer[i] - lastLevel) + lastLevel;
+            this.sampleBuffer[i] -= lastLevel;
+        }
+    },
+
+    advance: function (numCycles) {
+        this.sampleTime += numCycles / this.mc10.clockRate;
+        var bufferLen = this.sampleBuffer.length;
+        var sampleValue = 0;
+        if (bufferLen > 0) {
+            var index = Math.round(this.sampleTime * this.sampleRate);
+            if (index < bufferLen) {
+                sampleValue = this.sampleBuffer[index];
+            } else {
+                this.sampleBuffer = new Float32Array(0);
+                this.stop();
+            }
+        }
+        if (sampleValue>0) {
+           this.mc10.cpu.port2[4] = 0xff;
+        } else {
+           this.mc10.cpu.port2[4] = 0xef;
+        }
+    },
+
+    // callback function for stop event
+    stop: function() {
+        console.log("Auto-stop")
+    },
+
+    playC10: function (c10data) {
+        this.c10data = new Uint8Array(c10data);
+        this.c10bitsRemaining = 0;
+        this.c10byte = 0;
+        this.c10index = 0;
+        this.patchROM = true;
+        this.recording = false;
+        console.log('loading ' + this.c10data.length + ' raw bytes.')
+    },
+
+    getC10bit: function () {
+        var bit = 0;
+        if (this.c10bitsRemaining == 0) {
+            if (this.c10index < this.c10data.length) {
+                this.c10byte = this.c10data[this.c10index++];
+                bit = this.c10byte & 1;
+                this.c10byte >>= 1;
+                this.c10bitsRemaining = 7;
+            } else {
+                this.patchROM = false;
+                this.stop();
+            } 
+        } else {
+            bit = this.c10byte & 1;
+            this.c10byte >>= 1;
+            this.c10bitsRemaining --;
+        }
+
+        return bit;
+    },
+
+    recordC10: function (autostop) {
+        this.patchROM = true;
+        this.recording = true;
+        this.autoStop = autostop;
+        this.recBuffer = new Uint8Array(0xffff+1);
+        this.recIndex = 0;
+    },
+
+    recordC10byte: function (byte) {
+        this.recBuffer[this.recIndex] = byte;
+        console.log(byte.toString(16))
+        this.recIndex = (this.recIndex + 1) & 0xffff;
+    },
+
+    saveRecord: function () {
+        this.patchROM = false;
+        this.recording = false;
+        this.autoStop(this.recBuffer.slice(0,this.recIndex));
     }
 }

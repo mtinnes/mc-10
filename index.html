@@ -1,10 +1,4 @@
-﻿<!doctype html>
-<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
-<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
-<!--[if IE 8]>    <html class="no-js lt-ie9" lang="en"> <![endif]-->
-<!--[if gt IE 8]><!-->
-<html class="no-js" lang="en" xmlns:fb="http://ogp.me/ns/fb#">
-<!--<![endif]-->
+<!doctype html>
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -12,8 +6,8 @@
     <meta name="keywords" content="Tandy, mc-10, mc10, emulator, emulation, javascript, trs-80, trs80, radio shack, radioshack">
     <meta name="viewport" content="width=device-width">
     <title>MC-10 Javascript Emulator</title>
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <link href='http://fonts.googleapis.com/css?family=Press+Start+2P' rel='stylesheet'
           type='text/css'>
     <link rel="stylesheet" href="mc10.css?v=6">
@@ -24,88 +18,25 @@
     <meta property="og:image" content="http://mc-10.com/Images/mc10_ss.jpg" />
     <meta property="og:url" content="http://mc-10.com" />
     <meta property="og:site_name" content="MC-10 Javascript Emulator" />
-    <meta property="fb:admins" content="701869110" />
 </head>
 <body>
-    <div id="fb-root"></div>
-    <script>
-        (function (d, s, id) {
-            var js, fjs = d.getElementsByTagName(s)[0];
-            if (d.getElementById(id)) return;
-            js = d.createElement(s); js.id = id;
-            js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&appId=202303830100&version=v2.0";
-            fjs.parentNode.insertBefore(js, fjs);
-        }(document, 'script', 'facebook-jssdk'));</script>
-    <!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
+       
     <div id="tv">
         <canvas id="screen" width="512" height="384">
             Your browser is not supported. Try Google Chrome.
         </canvas>
         <div id="controls">
             <input id="reset" type="button" value="Reset" />
-            <!--            <input id="run" type="button" value="Pause" />-->
+            <!-- <select id="keyboardSelect" name="keyboardSelect">
+                <option value="emulated">emulated keyboard</option>
+                <option value="modern">modern keyboad</option>
+            </select -->
             <input type="button" id="save" value="Save" />
+            <input type="button" id="record" value="Start record" />
             <input type="file" id="cassette" name="cassette" />
-            <select id="cassetteList" name="cassetteList">
-                <option value="">- Select Cassette -</option>
-                <optgroup label="CoCo Ports">
-                    <option value="SpaceAssault.c10">Space Assault [Type EXEC to start]</option>
-                </optgroup>
-                <optgroup label="Darren Atkinson">
-                    <option value="ASTROIDS.c10">Asteroids [Type EXEC to start]</option>
-                    <option value="MC_Bouncy_Ball.c10">MC Bouncy Ball [Type EXEC to start]</option>
-                    <option value="MC_FLAGON_BIRD.c10">MC Flagon Bird [Type EXEC to start]</option>
-                </optgroup>
-                <optgroup label="Greg Dionne">
-                    <option value="Pac-Man.C10">Pac-Man [Type EXEC to start]</option>
-                    <option value="Tetris.C10">Tetris [Type EXEC to start]</option>
-                    <option value="Kaleidoscope.C10">Kaleidoscope [Type EXEC to start]</option>
-                    <option value="RG2LIFE.C10">Conway's Life [Type EXEC to start]</option>
-                </optgroup>
-                <optgroup label="Tandy">
-                    <option value="pinball.C10">Pinball [Type EXEC to start]</option>
-                    <option value="minicalc.C10">Minicalc [Type RUN to start]</option>
-                    <option value="checkers.C10">Checkers [Type RUN to start]</option>
-                    <option value="breakout.C10">Breakout [Type RUN to start]</option>
-                    <option value="eggs.C10">Eggs [Type RUN to start]</option>
-                    <option value="horse.C10">Horse [Type RUN to start]</option>
-                    <option value="lander.C10">Lander [Type RUN to start]</option>
-                    <option value="pong.C10">Pong [Type RUN to start]</option>
-                </optgroup>
-                <optgroup label="Charles Pelosi">
-                    <option value="Demon_Attack.C10">Demon Attack [Type RUN to start]</option>
-                    <!--<option value="aster64.C10">Aster64 (Charles Pelosi)</option>-->
-                    <option value="block_drop.C10">Block Drop [Type RUN to start]</option>
-                    <option value="defend.C10">Defend [Type RUN to start]</option>
-                    <option value="Dragon_castles.C10">Dragon Castles [Type RUN to start]</option>
-                    <option value="FREEWAY.C10">Freeway [Type RUN to start]</option>
-                    <option value="roadrace.C10">Roadrace [Type RUN to start]</option>
-                </optgroup>
-                <optgroup label="Jim Gerrie">
-                    <option value="CRAWL.C10">Crawl [Type RUN to start]</option>
-                    <option value="MAHJONG.C10">Mahjong [Type RUN to start]</option>
-                    <option value="KLONDIKE.C10">Klondike [Type RUN to start]</option>
-                    <option value="PITMAN.C10">Pitman [Type RUN to start]</option>
-                    <option value="BERZERK.C10">Berzerk [Type RUN to start]</option>
-                    <option value="CAVE3D.C10">Cave 3D [Type RUN to start]</option>
-                    <option value="CHESS.C10">Chess [Type RUN to start]</option>
-                    <option value="FROG.C10">Frog [Type RUN to start]</option>
-                    <option value="INVADER.C10">Invader [Type RUN to start]</option>
-                    <option value="LANDERJG.C10">Lander [Type RUN to start]</option>
-                    <option value="ROVER.C10">Rover [Type RUN to start]</option>
-                    <option value="PENGUINO.C10">Penguino [Type RUN to start]</option>
-                </optgroup>
-                <optgroup label="Other">
-                    <option value="leapfrog.C10">Leapfrog [Type RUN to start]</option>
-                    <option value="kaleidoa.C10">Kaleidoscope [Type RUN to start]</option>
-                </optgroup>
-            </select>
+            <input type="file" id="wavcassette" name="wavcassette" />
         </div>
-        <div id="about">
-            Copyright 2014 © <a href="https://plus.google.com/116425976109095093270/posts">
-                Mike
-                Tinnes
-            </a>
+        <div id="mykeyboard">
         </div>
         <div id="babble">
             <h2>
@@ -125,34 +56,40 @@
             </h3>
             <p>
                 The keyboard is mapped directly to the original MC-10 <b>physical layout</b> so
-                you'll have to reference <a href="/Images/139100-trs80.jpg" target="_blank">this</a>.
+                you'll have to reference the keyboard graphic underneath the TV.
+            </p>
+            <p>    
+                Use Shift+0 to toggle between upper and lowercase characters.
+            </p>
+            <p>    
+                Use Control+0 to cycle the cursor amongst the various colors.
+            </p>
+            <p>    
+                Use Shift+@ to pause a BASIC program.  Press any other key to resume.
+            </p>
+            <p>    
+                Use ESC to emulate the BREAK key.
+            </p>
+            <p>    
                 Use the file button to upload .C10 cassette files or select one from the list.
             </p>
-            <h3>
-                Shameless Plug
-            </h3>
             <p>
-                <a href="http://www.catalystllc.biz">http://www.catalystllc.biz</a>
-            </p>
-            <p>
-                <fb:like href="http://mc-10.com" layout="standard" action="like" show_faces="true" share="true"></fb:like>
-            </p>
-            <p>
-                <g:plusone></g:plusone>
-            </p>
-            <p>
-                <a class="github-button" href="https://github.com/mtinnes">Follow @mtinnes</a>
-                <a class="github-button" href="https://github.com/mtinnes/mc-10" aria-label="Star mtinnes/mc-10 on GitHub">Star</a>
+            Copyright 2014 © <a href="https://plus.google.com/116425976109095093270/posts">
+                Mike
+                Tinnes
+            </a>
             </p>
         </div>
     </div>
-    <form id="download-form" method="post" action="/SaveCassette.ashx">
+
+    <form id="download-form" method="post" action="SaveCassette.ashx">
         <input type="hidden" id="cassette-data" name="cassette-data" />
         <input type="hidden" id="filename" name="filename" />
     </form>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script>        window.jQuery || document.write('<script src="js/libs/jquery-1.7.1.min.js"><\/script>')</script>
-    <script src="/MC10.js?v=10" type="text/javascript"></script>
+    <script src="MC10.js?v=6" type="text/javascript"></script>
     <script type="text/javascript">
         var mc10 = new MC10({ maxRam: 0x8fff });
         var charBuffer = [];
@@ -185,17 +122,20 @@
                 e.preventDefault();
             }
         });
-        $("#run").bind("click", function (e) {
-            mc10.isRunning ? mc10.pause() : mc10.run();
-            $("#run").val(mc10.isRunning ? "Pause" : "Run");
-        });
         $("#reset").bind("click", function (e) {
             mc10.reset();
+        });
+        $("#keyboardSelect").bind("change", function (e) {
+            console.debug(e)
+            mc10.changeKeyboard(e.srcElement.value);
         });
         $("#paste").bind("click", function (e) {
         });
         $("#cassette").bind("change", function (e) {
             handleFileSelect(e);
+        });
+        $("#wavcassette").bind("change", function(e) {
+            handleWavFileSelect(e);
         });
         $("#cassetteList").bind("change", function (e) {
             loadCassette();
@@ -206,6 +146,12 @@
             $("#filename").val(fname);
             $("#cassette-data").val(arrayBufferToBase64(buffer));
             $("#download-form").submit();
+        });
+        $("#record").bind("click", function (e) {
+            mc10.record(function (buffer) {
+                var fname = prompt("Filename?");
+                clientDownload(fname + '.c10',buffer);
+            });
         });
         $(document).ready(function () {
             mc10.reset();
@@ -228,10 +174,33 @@
             }
             return window.btoa(binary);
         }
+        
+        function arrayBufferToText(buffer) {
+            var binary = ''
+            var bytes = new Uint8Array(buffer)
+            var len = bytes.byteLength;
+            for (var i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i])
+            }
+            return binary;
+        }
+
+        function clientDownload(filename, buffer) {
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:application/octet-stream;base64,' + encodeURIComponent(arrayBufferToBase64(buffer)));
+            element.setAttribute('download', filename);
+
+            element.style.display = 'none';
+            document.body.appendChild(element);
+
+            element.click();
+
+            document.body.removeChild(element);
+        }
 
         function loadCassette() {
             var xhr = new XMLHttpRequest();
-            xhr.open("GET", "/cassettes/" + $("#cassetteList").val(), true);
+            xhr.open("GET", "cassettes/" + $("#cassetteList").val(), true);
             xhr.responseType = "arraybuffer";
             xhr.onload = function (e) {
                 if (this.status == 200) {
@@ -270,18 +239,27 @@
             }
             reader.readAsArrayBuffer(evt.target.files[0]);
         }
-    </script>
-    <script>
-        (function (i, s, o, g, r, a, m) {
-            i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
-                (i[r].q = i[r].q || []).push(arguments)
-            }, i[r].l = 1 * new Date(); a = s.createElement(o),
-            m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
-        })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
 
-        ga('create', 'UA-880433-14', 'auto');
-        ga('send', 'pageview');
+        function handleWavFileSelect(evt) {
+            var reader = new FileReader();
+            var audioReader = function (e) {
+                    var buffer = reader.result;
+                    var audioContext = new AudioContext();
+                    audioContext.decodeAudioData(buffer, function (decoded) {
+                        var typedArray = decoded.getChannelData(0);
+                        mc10.cassette.playAudio(decoded.sampleRate, typedArray);
+                    });
+            };
+            var c10Reader = function (e) {
+                var buffer = reader.result;
+                mc10.cassette.playC10(buffer);
+            };
+
+            var playfile = evt.target.files[0];
+            reader.onload = playfile.name.split('.').pop().toLowerCase() == 'wav' ? audioReader : c10Reader;
+            reader.readAsArrayBuffer(playfile);
+        }
+
     </script>
-    <script async defer id="github-bjs" src="https://buttons.github.io/buttons.js"></script>
 </body>
 </html>
