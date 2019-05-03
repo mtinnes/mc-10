@@ -27,10 +27,6 @@
         </canvas>
         <div id="controls">
             <input id="reset" type="button" value="Reset" />
-            <!-- <select id="keyboardSelect" name="keyboardSelect">
-                <option value="emulated">emulated keyboard</option>
-                <option value="modern">modern keyboad</option>
-            </select -->
             <input type="button" id="save" value="Save" />
             <input type="button" id="record" value="Start record" />
             <input type="file" id="cassette" name="cassette" />
@@ -43,13 +39,8 @@
                 MC-10 Emulator
             </h2>
             <p>
-                Yet another javascript emulator, this time for the legendary *ahem* <a href="http://en.wikipedia.org/wiki/TRS-80_MC-10">
-                    MC-10 microcomputer
-                </a> by Tandy Corp!
-            </p>
-            <p>
-                Purely the result of one persons (me) sentimental journey
-                into his childhood days of PEEK'ing and POKE'ing. Source is available on <a href="https://github.com/mtinnes/mc-10">GitHub</a>.
+                Original by Mike Tinnes. Source is available on <a href="https://github.com/mtinnes/mc-10">GitHub</a>.
+                This is the "cassette" branch.  To be incorporated later back into the main branch should it be deemed worthy...
             </p>
             <h3>
                 How to do it...
@@ -71,13 +62,11 @@
                 Use ESC to emulate the BREAK key.
             </p>
             <p>    
-                Use the file button to upload .C10 cassette files or select one from the list.
+                Two "Choose File" buttons: the first one can load .c10 files directly into memory;
+                The second one will play a .wav file to be used with CLOAD, CLOADM, or CLOAD* commands in BASIC.
             </p>
             <p>
-            Copyright 2014 © <a href="https://plus.google.com/116425976109095093270/posts">
-                Mike
-                Tinnes
-            </a>
+                The "Start Record" button can be pressed before typing CSAVE or CSAVE*.  You'll get prompted for a filename once it's all done.  It saves as a .c10 file.
             </p>
         </div>
     </div>
