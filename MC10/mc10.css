@@ -1,4 +1,4 @@
-﻿html {
+html {
     margin: 0;
     padding: 0;
     width: 100%;
@@ -7,7 +7,7 @@
 
 body {
     font-family: 'Press Start 2P', cursive;
-    background: url('/Images/bg.jpg') repeat-x 0 0;
+    background: url('Images/bg.jpg') repeat-x 0 0;
 }
 
 .full {
@@ -27,13 +27,22 @@ body {
     position: relative;
     width: 1000px;
     height: 680px;
-    background: url('/Images/old-television.png') no-repeat 0 0;
+    background: url('Images/old-television.png') no-repeat 0 0;
 }
 
 #controls {
     position: absolute;
     bottom: 40px;
     left: 155px;
+}
+
+#mykeyboard {
+    position: relative;
+    top: 665px;
+    left: 140px;
+    width: 600px;
+    height: 300px;
+    background: url('mc10keyboard.jpg') no-repeat 0 0;
 }
 
 #babble {

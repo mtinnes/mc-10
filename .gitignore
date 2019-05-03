@@ -203,3 +203,5 @@ google*
 
 .vs/
 *.opendb
+
+.DS_Store
