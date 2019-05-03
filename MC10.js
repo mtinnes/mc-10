@@ -3270,7 +3270,6 @@ MC10.Cassette.prototype = {
 
     recordC10byte: function (byte) {
         this.recBuffer[this.recIndex] = byte;
-        console.log(byte.toString(16))
         this.recIndex = (this.recIndex + 1) & 0xffff;
     },
 
