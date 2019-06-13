@@ -27,9 +27,7 @@
         </canvas>
         <div id="controls">
             <input id="reset" type="button" value="Reset" />
-            <input type="button" id="save" value="Save" />
             <input type="button" id="record" value="Start record" />
-            <input type="file" id="cassette" name="cassette" />
             <input type="file" id="wavcassette" name="wavcassette" />
         </div>
         <div id="mykeyboard">
@@ -71,11 +69,6 @@
         </div>
     </div>
 
-    <form id="download-form" method="post" action="SaveCassette.ashx">
-        <input type="hidden" id="cassette-data" name="cassette-data" />
-        <input type="hidden" id="filename" name="filename" />
-    </form>
-
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script>        window.jQuery || document.write('<script src="js/libs/jquery-1.7.1.min.js"><\/script>')</script>
     <script src="MC10.js?v=6" type="text/javascript"></script>
@@ -89,69 +82,34 @@
         $(document).bind('dragover dragend', function (e) {
             return false;
         });
-        $(document).bind('drop', function (e) {
-            e.stopPropagation();
-            e.preventDefault();
-            jQuery.each(e.dataTransfer.files, function (index, file) {
-                var fileReader = new FileReader();
-                fileReader.onload = (function (file) {
-                    return function (e) {
-                        charBuffer = [];
-                        Array.prototype.forEach.call(e.target.result, function (char, i) {
-                            charBuffer.push(char.toUpperCase().charCodeAt());
-                        });
-                        doPaste();
-                    };
-                })(file);
-                fileReader.readAsText(file);
-            });
-        })
+
         $(document).bind("keydown keypress", function (e) {
             if (e.which == 8 || e.which == 32) { // 8 == backspace, 32 == spacebar
                 e.preventDefault();
             }
         });
+
         $("#reset").bind("click", function (e) {
             mc10.reset();
         });
-        $("#keyboardSelect").bind("change", function (e) {
-            console.debug(e)
-            mc10.changeKeyboard(e.srcElement.value);
-        });
+
         $("#paste").bind("click", function (e) {
         });
-        $("#cassette").bind("change", function (e) {
-            handleFileSelect(e);
-        });
+
         $("#wavcassette").bind("change", function(e) {
             handleWavFileSelect(e);
         });
-        $("#cassetteList").bind("change", function (e) {
-            loadCassette();
-        });
-        $("#save").bind("click", function (e) {
-            var fname = prompt("Filename?");
-            var buffer = mc10.save(fname);
-            $("#filename").val(fname);
-            $("#cassette-data").val(arrayBufferToBase64(buffer));
-            $("#download-form").submit();
-        });
+
         $("#record").bind("click", function (e) {
             mc10.record(function (buffer) {
                 var fname = prompt("Filename?");
                 clientDownload(fname + '.c10',buffer);
             });
         });
+
         $(document).ready(function () {
             mc10.reset();
             mc10.run();
-            // Check for the various File API support.
-            if (window.File && window.FileReader && window.FileList && window.Blob) {
-                // Great success! All the File APIs are supported.
-            } else {
-                $("#cassette").hide();
-                $("#cassetteList").hide();
-            }
         });
 
         function arrayBufferToBase64(buffer) {
@@ -162,16 +120,6 @@
                 binary += String.fromCharCode(bytes[i])
             }
             return window.btoa(binary);
-        }
-        
-        function arrayBufferToText(buffer) {
-            var binary = ''
-            var bytes = new Uint8Array(buffer)
-            var len = bytes.byteLength;
-            for (var i = 0; i < len; i++) {
-                binary += String.fromCharCode(bytes[i])
-            }
-            return binary;
         }
 
         function clientDownload(filename, buffer) {
@@ -185,48 +133,6 @@
             element.click();
 
             document.body.removeChild(element);
-        }
-
-        function loadCassette() {
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", "cassettes/" + $("#cassetteList").val(), true);
-            xhr.responseType = "arraybuffer";
-            xhr.onload = function (e) {
-                if (this.status == 200) {
-                    mc10.load(this.response);
-                }
-            };
-            xhr.send();
-        }
-
-        function doPaste() {
-            pasteChar(0);
-        }
-
-        function pasteChar(idx) {
-            if (idx >= charBuffer.length) {
-                return;
-            }
-            console.debug(charBuffer[idx]);
-
-            var e1 = jQuery.Event('keydown', { keyCode: charBuffer[idx] });
-            $(document).trigger(e1);
-            setTimeout(function () {
-                var e2 = jQuery.Event('keyup', { keyCode: charBuffer[idx] });
-                $(document).trigger(e2);
-                setTimeout(function () {
-                    pasteChar(idx + 1);
-                }, 50);
-            }, 50);
-        }
-
-        function handleFileSelect(evt) {
-            var reader = new FileReader();
-            reader.onload = function (e) {
-                var buffer = reader.result;
-                mc10.load(reader.result);
-            }
-            reader.readAsArrayBuffer(evt.target.files[0]);
         }
 
         function handleWavFileSelect(evt) {
