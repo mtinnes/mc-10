@@ -137,21 +137,27 @@
 
         function handleWavFileSelect(evt) {
             var reader = new FileReader();
-            var audioReader = function (e) {
+            var wavReader = function (e) {
                     var buffer = reader.result;
                     var audioContext = new AudioContext();
                     audioContext.decodeAudioData(buffer, function (decoded) {
                         var typedArray = decoded.getChannelData(0);
-                        mc10.cassette.playAudio(decoded.sampleRate, typedArray);
+                        mc10.cassette.playWav(decoded.sampleRate, typedArray);
                     });
             };
             var c10Reader = function (e) {
                 var buffer = reader.result;
                 mc10.cassette.playC10(buffer);
             };
-
+            var txtReader = function (e) {
+                var buffer = reader.result;
+                mc10.quicktype(buffer);
+            }
             var playfile = evt.target.files[0];
-            reader.onload = playfile.name.split('.').pop().toLowerCase() == 'wav' ? audioReader : c10Reader;
+            var filetype = playfile.name.split('.').pop().toLowerCase();
+            reader.onload = filetype == 'wav' ? wavReader : 
+                            filetype == 'c10' ? c10Reader :
+                                                txtReader;
             reader.readAsArrayBuffer(playfile);
         }
 
