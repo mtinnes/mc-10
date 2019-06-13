@@ -3187,7 +3187,7 @@ MC10.Cassette = function (mc10) {
 }
 
 MC10.Cassette.prototype = {
-    playAudio: function (sampleRate, pcmSamples) {
+    playWav: function (sampleRate, pcmSamples) {
         console.log("loading " + pcmSamples.length + " samples at " + sampleRate + " Hz")
         this.sampleRate = sampleRate;
         this.sampleBuffer = pcmSamples.slice();
