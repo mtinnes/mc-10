@@ -87,7 +87,7 @@ var MC10 = function (opts) {
     this.actualFrameRate = 1000 / this.frameTime;
     this.cpu = new MC10.MC6803(this);
     this.vdg = new MC10.MC6847(this);
-    this.kbd = new MC10.KBD(this);
+    this.keyboard = new MC10.KBD(this);
     this.cassette = new MC10.Cassette(this);
 };
 
@@ -109,6 +109,8 @@ MC10.prototype = {
     reset: function () {
         this.vdg.reset();
         this.cpu.reset();
+        this.keyboard.reset();
+        this.cassette.reset();
     },
 
     run: function () {
@@ -144,316 +146,6 @@ MC10.prototype = {
 
     record: function (autoStop) {
         this.cassette.recordC10(autoStop);  
-    },
-
-    save: function (fname) {
-        var ab = new ArrayBuffer(0x1000);
-        var dv = new Uint8Array(ab);
-        var tmp = new ArrayBuffer(255);
-        var tmpdv = new Uint8Array(tmp);
-
-        var startAddress = (this.cpu.memory[0x93] << 8) + this.cpu.memory[0x94];
-        var loadAddress = (this.cpu.memory[0x93] << 8) + this.cpu.memory[0x94];
-        var endAddress = (this.cpu.memory[0x95] << 8) + this.cpu.memory[0x96];
-
-        var idx = 0;
-
-        // write leader
-        for (var i = 0; i < 128; i++) {
-            dv[idx++] = 0x55;
-        }
-        dv[idx++] = 0x3c;
-
-        dv[idx++] = 0x00; // block type
-        dv[idx++] = 0x0f; // data length
-
-        var checksum = 0x0f
-        checksum += 0x00;
-
-        fname = fname.toUpperCase();
-        // write filename
-        for (var i = 0; i < 8; i++) {
-            if (i >= fname.length) {
-                dv[idx++] = 0x00;
-            } else {
-                dv[idx++] = fname.charCodeAt(i);
-            }
-            checksum += dv[idx - 1];
-        }
-        dv[idx++] = 0x00; // BASIC file type
-        checksum += dv[idx - 1];
-        dv[idx++] = 0x00; // BINARY data mode
-        checksum += dv[idx - 1];
-        dv[idx++] = 0x00; // CONTINUOUS gap flag
-        checksum += dv[idx - 1];
-        dv[idx++] = startAddress >> 8; // start address
-        checksum += dv[idx - 1];
-        dv[idx++] = startAddress & 0xff;
-        checksum += dv[idx - 1];
-        dv[idx++] = loadAddress >> 8; // load address
-        checksum += dv[idx - 1];
-        dv[idx++] = loadAddress & 0xff;
-        checksum += dv[idx - 1];
-        dv[idx++] = checksum & 0xff;
-
-        // write leader
-        for (var i = 0; i < 128; i++) {
-            dv[idx++] = 0x55;
-        }
-
-        // write data
-        var cnt = 0;
-        var pos = startAddress;
-        while (pos < endAddress) {
-            tmpdv[cnt++] = this.cpu.memory[pos++];
-            if (cnt == 255) {
-                cnt = 0;
-                dv[idx++] = 0x55;
-                dv[idx++] = 0x3c;
-                dv[idx++] = 0x01;
-                checksum = 0x01;
-                dv[idx++] = 0xff;
-                checksum += dv[idx - 1];
-                for (var i = 0; i < 255; i++) {
-                    dv[idx++] = tmpdv[i];
-                    checksum += dv[idx - 1];
-                }
-                dv[idx++] = checksum;
-                dv[idx++] = 0x55;
-            }
-        }
-        dv[idx++] = 0x55;
-        dv[idx++] = 0x3c;
-        dv[idx++] = 0x01;
-        checksum = 0x01;
-        dv[idx++] = cnt;
-        checksum += cnt;
-        for (var i = 0; i < cnt; i++) {
-            dv[idx++] = tmpdv[i];
-            checksum += tmpdv[i];
-        }
-        dv[idx++] = checksum & 0xff;
-        dv[idx++] = 0x55;
-
-        // write EOF
-        dv[idx++] = 0x55;
-        dv[idx++] = 0x55;
-        dv[idx++] = 0x3c;
-        dv[idx++] = 0xff;
-        dv[idx++] = 0x00;
-        dv[idx++] = 0xff;
-        dv[idx++] = 0xff;
-
-        return ab;
-    },
-
-    load: function (buffer) {
-        var dv = new Uint8Array(buffer);
-
-        var idx = 0;
-
-        idx = this.readLeader(dv, idx);
-        if (idx == -1) {
-            return;
-        }
-        var fi = this.readFileName(dv, idx);
-        if (fi == -1) {
-            return;
-        }
-        idx = fi.idx;
-
-        if (fi.fileType != 0) { //set the start and load addresses in memory
-            this.cpu.memory[0x426a] = (fi.startAddress >> 8);
-            this.cpu.memory[0x426b] = (fi.startAddress & 0xff);
-            this.cpu.memory[0x426c] = (fi.loadAddress >> 8);
-            this.cpu.memory[0x426d] = (fi.loadAddress & 0xff);
-            console.debug("EXEC ADDR: " + fi.startAddress);
-            this.cpu.memory[0x421F] = (fi.startAddress >> 8);
-            this.cpu.memory[0x4220] = (fi.startAddress & 0xff);
-        } else if (fi.fileType == 0) { //if we're loading a basic program, we need to fudge the start and load addresses
-            fi.loadAddress = (this.cpu.memory[0x93]<<8) + this.cpu.memory[0x94];
-        }
-
-        idx = this.readLeader(dv, idx);
-        if (idx == -1) {
-            return;
-        }
-
-        var len = 0;
-        while (1) {
-            var dataBlock = this.readDataBlock(dv, idx, fi.loadAddress + len);
-            if (dataBlock == -1) {
-                return;
-            }
-            if (dataBlock == -2) {
-                break;
-            }
-            len += dataBlock.len;
-            idx = dataBlock.idx;
-            idx = this.readLeader(dv, idx);
-            if (idx == -1) {
-                return;
-            }
-        }
-
-        //update other basic areas if need be..
-        //NOTE: totalBytes MIGHT BE OFF BY ONE
-        if (fi.fileType == 0) {
-            len += (this.cpu.memory[0x93]<<8) + this.cpu.memory[0x94];
-            this.cpu.memory[0x95] = len >> 8;
-            this.cpu.memory[0x96] = len & 0xff;
-        }
-
-        idx = this.readEOF(dv, idx);
-        if (idx == -1) {
-            return;
-        }
-    },
-
-    readEOF: function (dv, idx) {
-        var b = dv[idx++];
-        if (b != 0x3c) {
-            console.debug("invalid cassette file");
-            return -1;
-        }
-
-        b = dv[idx++];
-        if (b != 0xff) {
-            console.debug("invalid cassette file");
-            return -1;
-        }
-        b = dv[idx++];
-        if (b != 0x00) {
-            console.debug("invalid cassette file");
-            return -1;
-        }
-        b = dv[idx++];
-        if (b != 0xff) {
-            console.debug("invalid cassette file");
-            return -1;
-        }
-
-        return idx;
-    },
-
-    readLeader: function (dv, idx) {
-        var b = 0x55;
-        while (idx < dv.buffer.byteLength && b == 0x55) {
-            var b = dv[idx++];
-        }
-        return idx - 1;
-    },
-
-    readDataBlock: function (dv, idx, loadAddress) {
-        var b = dv[idx++];
-        if (b != 0x3c) {
-            console.debug("invalid cassette file");
-            return -1;
-        }
-        var checksum = 0;
-
-        b = dv[idx++];
-        if (b == 0xff) { // EOF
-            return -2;
-        }
-        if (b != 0x01) {
-            console.debug("invalid cassette file");
-            return -1;
-        }
-        checksum += b;
-
-        var len = dv[idx++];
-        checksum += len;
-        for (var i = 0; i < len; i++) {
-            b = dv[idx++];
-            this.cpu.memory[loadAddress++] = b;
-            checksum += b;
-        }
-
-        b = dv[idx++];
-        if (b != (checksum & 0xff)) {
-            console.debug("invalid cassette file");
-            return -1;
-        }
-        return { idx: idx, len: len };
-    },
-
-    readFileName: function (dv, idx) {
-        var b = dv[idx++];
-        if (b != 0x3c) {
-            console.debug("invalid cassette file");
-            return -1;
-        }
-        if (dv[idx++] != 0x00) {
-            console.debug("invalid cassette file");
-            return -1;
-        }
-        if (dv[idx++] != 0x0f) {
-            console.debug("invalid cassette file");
-            return -1;
-        }
-        var checksum = 0;
-
-        var fname = "";
-        for (var i = 0; i < 8; i++) {
-            b = dv[idx++];
-            fname += String.fromCharCode(b);
-            checksum += b;
-        }
-
-        var filetype = dv[idx++];
-        checksum += filetype;
-
-        var datatype = dv[idx++];
-        checksum += datatype;
-
-        var gapflag = dv[idx++];
-        checksum += gapflag;
-
-        var a1 = dv[idx++];
-        var a2 = dv[idx++];
-        checksum += a1;
-        checksum += a2;
-        var startAddress = (a1 << 8) + a2;
-
-        a1 = dv[idx++];
-        a2 = dv[idx++];
-        checksum += a1;
-        checksum += a2;
-        var loadAddress = (a1 << 8) + a2;
-
-        checksum += 0x0f;
-
-        b = dv[idx++];
-        if (b != (checksum & 0xff)) {
-            console.debug("invalid cassette file");
-            return -1;
-        }
-        return {
-            idx: idx,
-            fileType: filetype,
-            dataType: datatype,
-            gapFlag: gapflag,
-            startAddress: startAddress,
-            loadAddress: loadAddress,
-            fileName: fname
-        };
-    },
-
-    paste: function (data) {
-
-        //        var start = (this.cpu.memory[0x93] << 8) + this.cpu.memory[0x94];
-        //	    var finish = (this.cpu.memory[0x95] << 8) + this.cpu.memory[0x96];
-
-        //        for (var i = 0; i < data.length; i++) {
-        //            var addr = start + 4 + i;
-        //            if (data[i] == '\n') {
-        //                this.cpu.setMemory(addr, 0);
-        //                i += 4;
-        //            } else {
-        //                this.cpu.setMemory(start + 4 + i, data[i].charCodeAt());
-        //            }
-        //        }
     }
 }
 
@@ -630,6 +322,12 @@ MC10.MC6803.prototype = {
                 this.mc10.cassette.saveRecord();
                 opcode = 0x39;
             }
+        }
+
+        if (this.mc10.keyboard.patchROM && lastpc==0xf86c) {
+            this.REG_A[0] = this.mc10.keyboard.quickread();
+            this.TSTA();
+            opcode = 0x21;
         }
 
         if (opcode in this.optable) {
@@ -3068,8 +2766,11 @@ MC10.MC6847.prototype = {
     }
 }
 
-MC10.KBD = function (mc10) {
+MC10.KBD = function (mc10) {    
     this.mc10 = mc10;
+    this.textBuffer = new Uint8Array(0);
+    this.textIndex = 0;
+    this.patchROM = false;
     this.init();
 };
 
@@ -3173,6 +2874,30 @@ MC10.KBD.prototype = {
 
     keyPress: function (evt) {
 
+    },
+
+    quicktype: function (textdata) {
+        this.textBuffer = new Uint8Array(textdata);
+        this.textIndex = 0;
+        this.patchROM = true;
+        console.log('entering ' + this.textBuffer.length + ' text characters.');
+    },
+
+    quickread: function () {
+        var byte = this.textBuffer[this.textIndex++] & 0xff;
+
+        if (this.textIndex >= this.textBuffer.length) {
+            this.patchROM = false;
+            console.log('text entered.');
+        }
+        return byte==10 ? 13 : 
+               byte==13 ? 0 : 
+                          byte;
+    },
+
+    reset: function() {
+        this.patchROM = false;
+        this.textIndex = 0;
     }
 }
 
@@ -3277,5 +3002,11 @@ MC10.Cassette.prototype = {
         this.patchROM = false;
         this.recording = false;
         this.autoStop(this.recBuffer.slice(0,this.recIndex));
+    },
+
+    reset: function() {
+        this.patchROM = false;
+        this.recording = false;
+        this.recIndex = 0;
     }
 }
