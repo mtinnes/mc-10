@@ -142,6 +142,7 @@
                     audioContext.decodeAudioData(buffer, function (decoded) {
                         var typedArray = decoded.getChannelData(0);
                         mc10.cassette.playWav(decoded.sampleRate, typedArray);
+
                     });
             };
             var c10Reader = function (e) {
