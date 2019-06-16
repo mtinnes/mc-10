@@ -2828,7 +2828,7 @@ MC10.KBD.prototype = {
 
     keyDown: function (evt) {
         var ks = evt.keyCode;
-
+        
         if (ks >= 65 && ks <= 90) {
             this.mc10.cpu.port1[ks % 8] &= ~(1 << ((ks - 64) / 8)); // A - Z
         } else if (ks == 13) {
@@ -2869,6 +2869,7 @@ MC10.KBD.prototype = {
         }
         evt.preventDefault();
         evt.stopPropagation();
+        this.mc10.vdg.audioCtx.resume(); // https://goo.gl/7K7WLu
         return false;
     },
 
