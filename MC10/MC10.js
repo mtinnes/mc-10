@@ -2507,22 +2507,16 @@ MC10.MC6847.prototype = {
         }
         this.audioNode = null;
         this.audioBuffer = null;
-        this.audioTimer;
         this.toggleSpeaker = 0;
         this.abuf = new FiniteBuffer(100000); // really only need 41,000 samples for 60 Hz rate
         this.sampleRate = 48000;
         this.sample = 0;
         this.sampleValue = 0;
-        this.sampleCount = 0;
         this.vramIs4k = true;
+        this.initAudioCtx();
     },
 
-    reset: function () {
-        this.graphicsMode = 0;
-        this.palette = 0;
-        this.ctx.fillStyle = "black";
-        this.ctx.fillRect(0, 0, 512, 384);
-
+    initAudioCtx: function () {
         var self = this;
         if (this.audioCtx != null) {
             this.sampleRate = this.audioCtx.sampleRate;
@@ -2534,6 +2528,13 @@ MC10.MC6847.prototype = {
             this.audioNode.onaudioprocess = function (e) { self.processAudio(e); }
             this.audioNode.connect(this.audioCtx.destination);
         }
+    },
+
+    reset: function () {
+        this.graphicsMode = 0;
+        this.palette = 0;
+        this.ctx.fillStyle = "black";
+        this.ctx.fillRect(0, 0, 512, 384);
     },
 
     scaleImageData: function (imageData, scale) {
@@ -2725,6 +2726,7 @@ MC10.MC6847.prototype = {
 
         var iData = 0;
         var iBuf = 0;
+
         while (this.abuf.length > 0) {
             var bufValue = this.abuf.pull() != 0 ? 0.1 : 0;
             sampleValue = (sampleValue - bufValue) * droop + bufValue;
