@@ -89,6 +89,7 @@ var MC10 = function (opts) {
     this.vdg = new MC10.MC6847(this);
     this.keyboard = new MC10.KBD(this);
     this.cassette = new MC10.Cassette(this);
+    this.debugger = document.getElementById("debugger");
 };
 
 // BASIC ROM
@@ -113,12 +114,27 @@ MC10.prototype = {
         this.cassette.reset();
     },
 
+    resetDown: function () {
+        this.pause();
+        this.vdg.reset();
+        for (var i = 0; i < 0x1800; ++i) {
+            this.vdg.updateDisplay(i, this.cpu.memory[0x4000 + (i & 0xfff)]);
+        }
+        this.vdg.paintFrame();
+    },
+
+    resetUp: function () {
+        this.run();
+        this.reset();
+    },
+
     run: function () {
         if (!this.isRunning) {
             this.isRunning = true;
             this.cycleInterval = setInterval(function () {
                 this.frame();
             }.bind(this), this.frameTime);
+            // this.debugger.value = "running...";
         }
     },
 
@@ -303,9 +319,22 @@ MC10.MC6803.prototype = {
             return 1;
         }
 
-        //        if (this.REG_PC>=0x6ff3 & this.REG_PC<=0x7032) {
-        //            this.disassemble(this.REG_PC);
-        //        }
+//      if (this.REG_PC>=0x60B6 && this.REG_PC<=0xE000 && this.mc10.debugger.value == "running...") {
+//          this.mc10.debugger.value = 
+//              this.lastValid6 + "\n" + 
+//              this.lastValid5 + "\n" + 
+//              this.lastValid4 + "\n" + 
+//              this.lastValid3 + "\n" + 
+//              this.lastValid2 + "\n" + 
+//              this.lastValid1 + "\n";
+//      } else {
+//          this.lastValid6 = this.lastValid5;
+//          this.lastValid5 = this.lastValid4;
+//          this.lastValid4 = this.lastValid3;
+//          this.lastValid3 = this.lastValid2;
+//          this.lastValid2 = this.lastValid1;
+//          this.lastValid1 = this.disassemble(this.REG_PC);
+//      }
 
         var opcode = this.fetchOpCode();
 
@@ -921,33 +950,33 @@ MC10.MC6803.prototype = {
         this.optable[0x3e] = function () { self.memmode = self.INHERENT; self.WAI(); return 9; };
 
 
-        this.optable[0x00] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x00); return 2; };
-        this.optable[0x02] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x02); return 2; };
-        this.optable[0x03] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x03); return 2; };
-        this.optable[0x12] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x12); return 2; };
-        this.optable[0x13] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x13); return 2; };
-        this.optable[0x14] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x14); return 2; };
-        this.optable[0x15] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x15); return 2; };
-        this.optable[0x18] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x18); return 2; };
-        this.optable[0x1a] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x1a); return 2; };
-        this.optable[0x1c] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x1c); return 2; };
-        this.optable[0x1d] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x1d); return 2; };
-        this.optable[0x1e] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x1e); return 2; };
-        this.optable[0x1f] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x1f); return 2; };
-        this.optable[0x41] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x41); return 2; };
-        this.optable[0x45] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x45); return 2; };
-        this.optable[0x4b] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x4b); return 2; };
+        this.optable[0x00] = function () { self.memmode = self.IMMEDIATE; self.CLB(); return 2; };
+        this.optable[0x02] = function () { self.memmode = self.IMMEDIATE; self.SXA(); return 2; };
+        this.optable[0x03] = function () { self.memmode = self.IMMEDIATE; self.SEA(); return 2; };
+        this.optable[0x12] = function () { self.memmode = self.IMMEDIATE; self.SCBA(); return 2; };
+        this.optable[0x13] = function () { self.memmode = self.IMMEDIATE; self.S1BA(); return 2; };
+        this.optable[0x14] = function () { self.memmode = self.IMMEDIATE; self.TXAB(); return 2; };
+        this.optable[0x15] = function () { self.memmode = self.IMMEDIATE; self.TCBA(); return 2; };
+        this.optable[0x18] = function () { self.memmode = self.IMMEDIATE; self.ABAI(); return 2; };
+        this.optable[0x1a] = function () { self.memmode = self.IMMEDIATE; self.ABAI(); return 2; };
+        this.optable[0x1c] = function () { self.memmode = self.IMMEDIATE; self.TCAB(); return 2; };
+        this.optable[0x1d] = function () { self.memmode = self.IMMEDIATE; self.TCBA(); return 2; };
+        this.optable[0x1e] = function () { self.memmode = self.IMMEDIATE; self.TBA(); return 2; };
+        this.optable[0x1f] = function () { self.memmode = self.IMMEDIATE; self.TBAC(); return 2; };
+        this.optable[0x41] = function () { self.memmode = self.IMMEDIATE; self.TSTA(); return 2; };
+        this.optable[0x45] = function () { self.memmode = self.IMMEDIATE; self.LSRA(); return 2; };
+        this.optable[0x4b] = function () { self.memmode = self.IMMEDIATE; self.DECA(); return 2; };
         this.optable[0x4e] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x4e); return 2; };
-        this.optable[0x51] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x51); return 2; };
-        this.optable[0x55] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x55); return 2; };
-        this.optable[0x5b] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x5b); return 2; };
+        this.optable[0x51] = function () { self.memmode = self.IMMEDIATE; self.TSTB(); return 2; };
+        this.optable[0x55] = function () { self.memmode = self.IMMEDIATE; self.LSRB(); return 2; };
+        this.optable[0x5b] = function () { self.memmode = self.IMMEDIATE; self.DECB(); return 2; };
         this.optable[0x5e] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x5e); return 2; };
-        this.optable[0x61] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x61); return 2; };
-        this.optable[0x65] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x65); return 2; };
-        this.optable[0x6b] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x6b); return 2; };
-        this.optable[0x71] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x71); return 2; };
-        this.optable[0x75] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x75); return 2; };
-        this.optable[0x7b] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x7b); return 2; };
+        this.optable[0x61] = function () { self.memmode = self.INDEX;     self.TST(); return 6; };
+        this.optable[0x65] = function () { self.memmode = self.INDEX;     self.LSR(); return 6; };
+        this.optable[0x6b] = function () { self.memmode = self.INDEX;     self.DEC(); return 6; };
+        this.optable[0x71] = function () { self.memmode = self.EXTENDED;  self.TST(); return 6; };
+        this.optable[0x75] = function () { self.memmode = self.EXTENDED;  self.LSR(); return 6; };
+        this.optable[0x7b] = function () { self.memmode = self.EXTENDED;  self.DEC(); return 6; };
         this.optable[0x87] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x87); return 2; };
         this.optable[0x8f] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0x8f); return 2; };
         this.optable[0xc7] = function () { self.memmode = self.IMMEDIATE; self.ERROR(0xc7); return 2; };
@@ -959,6 +988,9 @@ MC10.MC6803.prototype = {
         console.debug("ERROR: unknown opcode: " + op);
     },
     ABA: function () {
+        this.REG_A[0] = this.add(this.REG_A[0], this.REG_B[0]);
+    },
+    ABAI: function () {
         this.REG_A[0] = this.add(this.REG_A[0], this.REG_B[0]);
     },
     ABX: function () {
@@ -1129,6 +1161,9 @@ MC10.MC6803.prototype = {
     },
     CBA: function () {
         this.subtract(this.REG_A[0], this.REG_B[0]);
+    },
+    CLB: function () {
+        this.REG_B[0] = 0; // flags unaffected
     },
     CLC: function () {
         this.F_CARRY = 0;
@@ -1317,14 +1352,14 @@ MC10.MC6803.prototype = {
     NEGB: function () {
         this.REG_B[0] = this.negate(this.REG_B[0]);
     },
-    NGC: function () {
+    NGC: function () { // undocumented
         var scratch = this.negateCarry(this.fetchData());
         this.setLastRead(scratch);
     },
-    NGCA: function () {
+    NGCA: function () { // undocumented
         this.REG_A[0] = this.negateCarry(this.REG_A[0]);
     },
-    NGCB: function () {
+    NGCB: function () { // undocumented
         this.REG_B[0] = this.negateCarry(this.REG_B[0]);
     },
     NOP: function () {
@@ -1393,8 +1428,19 @@ MC10.MC6803.prototype = {
     SBCB: function () {
         this.REG_B[0] = this.subtractCarry(this.REG_B[0], this.fetchData());
     },
+    S1BA: function () { // undocumented subtract(carry=1) b from a.
+        this.F_CARRY = 1;
+        this.REG_A[0] = this.subtractCarry(this.REG_A[0], this.REG_B[0]);
+    },
+    SCBA: function () { // undocumented subtract(carry) b from a.
+        this.REG_A[0] = this.subtractCarry(this.REG_A[0], this.REG_B[0]);
+    },
     SCC: function () {
         this.F_CARRY = 1;
+    },
+    SEA: function () { // undocumented
+        this.REG_A[0] = 255;
+        // registers unaffected
     },
     SEI: function () {
         this.F_INTERRUPT = 1;
@@ -1465,6 +1511,10 @@ MC10.MC6803.prototype = {
         //                    this.pushStack16(this.flagsToVariable());
         //                    this.REG_PC = (this.fetchMemory(0xfffa) << 8) + this.fetchMemory(0xfffb);
     },
+    SXA: function () { // undocumented
+        this.REG_A[0] = this.F_CARRY ? 255 : 0;
+        // registers unaffected
+    },
     TAB: function () {
         this.REG_B[0] = this.REG_A[0];
         this.set8NZ(this.REG_B[0]);
@@ -1479,6 +1529,19 @@ MC10.MC6803.prototype = {
         this.REG_A[0] = this.REG_B[0];
         this.set8NZ(this.REG_A[0]);
         this.F_OVERFLOW = 0;
+    },
+    TBAC: function () {
+        this.REG_A[0] = this.REG_B[0];
+        this.F_CARRY = 1;
+    },
+    TXAB: function () { // undocumented
+        this.REG_B[0] = this.subtractCarry(this.REG_A[0],0);
+    },
+    TCAB: function () { // undocumented
+        this.REG_B[0] = this.complement(this.REG_A[0]);
+    },
+    TCBA: function () { // undocumented
+        this.REG_A[0] = this.complement(this.REG_B[0]);
     },
     TPA: function () {
         this.REG_A[0] = this.flagsToVariable();
@@ -1591,8 +1654,8 @@ MC10.MC6803.prototype = {
                 (enb & 0x08 ? this.port1[3] : 0xff) &
                 (enb & 0x10 ? this.port1[4] : 0xff) &
                 (enb & 0x20 ? this.port1[5] : 0xff) &
-                (enb & 0x40 ? this.port1[6] : 0xff) &
-                (enb & 0x80 ? this.port1[7] : 0xff);
+                (enb & 0x40 ? this.port1[6] : address & 0xff | 0x3f) &
+                (enb & 0x80 ? this.port1[7] : address & 0xff | 0x3f);
             return ret;
         }
         //is it an internal register?
@@ -2199,24 +2262,24 @@ MC10.MC6803.prototype = {
             var dest = this.fetchMemory((address + 1) & 0xffff);
             dest = dest & 0x80 ? dest | 0xff00 : dest;
             dest = (address + 2 + dest) & 0xffff;
-            console.debug(address.toString(16) + " " + opstr + "  " + dest.toString(16));
+            return(address.toString(16) + " " + opstr + "  " + dest.toString(16));
         } else if ((op & 0xf0) == 0x60 | (op & 0xf0) == 0xa0 | (op & 0xf0) == 0xe0) { //indexed
             var offset = this.fetchMemory((address + 1) & 0xffff);
-            console.debug(address.toString(16) + " " + opstr + "  " + offset.toString(16) + ",X");
+            return(address.toString(16) + " " + opstr + "  " + offset.toString(16) + ",X");
         } else if ((op & 0xf0) == 0x70 | (op & 0xf0) == 0xb0 | (op & 0xf0) == 0xf0) { // extended
             var mem16 = (this.fetchMemory((address + 1) & 0xffff) << 8) + this.fetchMemory((address + 2) & 0xffff);
-            console.debug(address.toString(16) + " " + opstr + "  " + mem16.toString(16));
+            return(address.toString(16) + " " + opstr + "  " + mem16.toString(16));
         } else if ((op & 0xf0) == 0x90 | (op & 0xf0) == 0xd0) { // direct
             var mem8 = this.fetchMemory((address + 1) & 0xffff);
-            console.debug(address.toString(16) + " " + opstr + "  " + mem8.toString(16));
+            return(address.toString(16) + " " + opstr + "  " + mem8.toString(16));
         } else if ((op & 0xf0) == 0x80 | (op & 0xf0) == 0xc0) {
             var imm = this.fetchMemory((address + 1) & 0xffff);
             if ((op & 0xf) == 0x3 | (op & 0xf) > 0xb) {
                 imm = (imm << 8) + this.fetchMemory((address + 2) & 0xffff);
             }
-            console.debug(address.toString(16) + " " + opstr + " #" + imm.toString(16));
+            return(address.toString(16) + " " + opstr + " #" + imm.toString(16));
         } else {
-            console.debug(address.toString(16) + " " + opstr);
+            return(address.toString(16) + " " + opstr);
         }
     }
 }

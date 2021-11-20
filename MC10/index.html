@@ -8,11 +8,7 @@
     <title>MC-10 Javascript Emulator</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-    <link href='http://fonts.googleapis.com/css?family=Press+Start+2P' rel='stylesheet'
-          type='text/css'>
     <link rel="stylesheet" href="mc10.css?v=6">
-    <script src="https://apis.google.com/js/platform.js" async defer>
-    </script>
     <meta property="og:title" content="MC-10 Emulator in Javascript" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="http://mc-10.com/Images/mc10_ss.jpg" />
@@ -27,46 +23,42 @@
         </canvas>
         <div id="controls">
             <input id="reset" type="button" value="Reset" />
-            <input type="button" id="record" value="Start record" />
-            <input type="file" id="wavcassette" name="wavcassette" />
+            <input type="button" id="quicktype" value="QuickType&#153;" />
+            <input type="button" id="play" name="play" value="Play" />
+            <input type="button" id="record" name="record" value="Record" />
         </div>
         <div id="mykeyboard">
         </div>
-        <div id="babble">
-            <h2>
-                MC-10 Emulator
-            </h2>
-            <p>
-                Original by Mike Tinnes. Source is available on <a href="https://github.com/mtinnes/mc-10">GitHub</a>.
-                This is the "cassette" branch.  To be incorporated later back into the main branch should it be deemed worthy...
-            </p>
-            <h3>
-                How to do it...
-            </h3>
-            <p>
-                The keyboard is mapped directly to the original MC-10 <b>physical layout</b> so
-                you'll have to reference the keyboard graphic underneath the TV.
-            </p>
-            <p>    
-                Use Shift+0 to toggle between upper and lowercase characters.
-            </p>
-            <p>    
-                Use Control+0 to cycle the cursor amongst the various colors.
-            </p>
-            <p>    
-                Use Shift+@ to pause a BASIC program.  Press any other key to resume.
-            </p>
-            <p>    
-                Use ESC to emulate the BREAK key.
-            </p>
-            <p>    
-                "Choose File" will start typing a text file in BASIC.  If the file is a .c10 or a .wav file it will instead emulate reading it via cassette.  (You will need to previously enter a CLOAD, CLOADM, or CLOAD* command).
-            </p>
-            <p>
-                The "Start Record" button can be pressed before typing CSAVE or CSAVE*.  You'll get prompted for a filename once it's all done.  It saves as a .c10 file.
-            </p>
-        </div>
     </div>
+
+    <textarea id="debugger" name="debugger">
+MC-10 Emulator
+
+Original by Mike Tinnes at http://mc-10.com
+
+This is the "debugger" branch.
+
+The keyboard is mapped directly to the original MC-10 physical layout.
+You can find a picture the keyboard underneath the TV you can use for reference.
+For MICROCOLOR BASIC programs:
+   Use Control+0 to cycle the cursor amongst the various colors.
+   Use Shift+0 to toggle between upper and lowercase characters.
+   Use Shift+@ to pause a BASIC program.  Press any other key to resume.
+   Use ESC to emulate the BREAK key.
+
+"QuickType" will redirect the keyboard input routine to a file.
+   You can use this to type in a BASIC file.
+   QuickType is a trademark of James "The Animal" Tamer popularized
+   in his amazing Virtual MC-10 emulator.
+
+"Play" will start reading a file.
+   If the file is a .c10 or a .wav file it will emulate cassette playback.
+   (You will need to previously enter a CLOAD, CLOADM, or CLOAD* command).
+
+"Record" can be pressed before typing CSAVE or CSAVE*.
+   You'll get prompted for a filename once it's all done.
+   It saves as a .c10 file.
+    </textarea>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script>        window.jQuery || document.write('<script src="js/libs/jquery-1.7.1.min.js"><\/script>')</script>
@@ -88,15 +80,19 @@
             }
         });
 
-        $("#reset").bind("click", function (e) {
-            mc10.reset();
+        $("#reset").bind("mousedown", function (e) {
+            mc10.resetDown();
+        });
+
+        $("#reset").bind("mouseup", function (e) {
+            mc10.resetUp();
         });
 
         $("#paste").bind("click", function (e) {
         });
 
-        $("#wavcassette").bind("change", function(e) {
-            handleWavFileSelect(e);
+        $("#play").bind("change", function(e) {
+            playFile(e);
         });
 
         $("#record").bind("click", function (e) {
@@ -134,7 +130,18 @@
             document.body.removeChild(element);
         }
 
-        function handleWavFileSelect(evt) {
+        function quickTypeFile(evt) {
+            var reader = new FileReader();
+            var txtReader = function (e) {
+                var buffer = reader.result;
+                mc10.keyboard.quicktype(buffer);
+            }
+            var playfile = evt.target.files[0];
+            reader.onload = txtReader;
+            reader.readAsArrayBuffer(playfile);
+        }
+
+        function playFile(evt) {
             var reader = new FileReader();
             var wavReader = function (e) {
                     var buffer = reader.result;
@@ -144,11 +151,11 @@
                         mc10.cassette.playWav(decoded.sampleRate, typedArray);
 
                     });
-            };
+            }
             var c10Reader = function (e) {
                 var buffer = reader.result;
                 mc10.cassette.playC10(buffer);
-            };
+            }
             var txtReader = function (e) {
                 var buffer = reader.result;
                 mc10.keyboard.quicktype(buffer);
@@ -159,7 +166,6 @@
                             filetype == 'c10' ? c10Reader :
                                                 txtReader;
             reader.readAsArrayBuffer(playfile);
-            $('#wavcassette')[0].value="";
         }
 
     </script>
