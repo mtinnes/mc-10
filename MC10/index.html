@@ -91,8 +91,20 @@ For MICROCOLOR BASIC programs:
         $("#paste").bind("click", function (e) {
         });
 
-        $("#play").bind("change", function(e) {
-            playFile(e);
+        $("#quicktype").bind("click", function (e) {
+            var input = $(document.createElement('input'));
+            input.attr("type","file");
+            input.attr("onchange","quickTypeFile(this)");
+            input.trigger('click');
+            return false;
+        });
+
+        $("#play").bind("click", function(e) {
+            var input = $(document.createElement('input'));
+            input.attr("type","file");
+            input.attr("onchange","playFile(this)");
+            input.trigger('click');
+            return false;
         });
 
         $("#record").bind("click", function (e) {
@@ -130,18 +142,18 @@ For MICROCOLOR BASIC programs:
             document.body.removeChild(element);
         }
 
-        function quickTypeFile(evt) {
+        function quickTypeFile(target) {
             var reader = new FileReader();
             var txtReader = function (e) {
                 var buffer = reader.result;
                 mc10.keyboard.quicktype(buffer);
             }
-            var playfile = evt.target.files[0];
+            var playfile = target.files[0];
             reader.onload = txtReader;
             reader.readAsArrayBuffer(playfile);
         }
 
-        function playFile(evt) {
+        function playFile(target) {
             var reader = new FileReader();
             var wavReader = function (e) {
                     var buffer = reader.result;
@@ -160,7 +172,7 @@ For MICROCOLOR BASIC programs:
                 var buffer = reader.result;
                 mc10.keyboard.quicktype(buffer);
             }
-            var playfile = evt.target.files[0];
+            var playfile = target.files[0];
             var filetype = playfile.name.split('.').pop().toLowerCase();
             reader.onload = filetype == 'wav' ? wavReader : 
                             filetype == 'c10' ? c10Reader :
