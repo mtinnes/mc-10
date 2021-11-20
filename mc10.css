@@ -6,61 +6,54 @@ html {
 }
 
 body {
-    font-family: 'Press Start 2P', cursive;
-    background: url('Images/bg.jpg') repeat-x 0 0;
+    background-color: black;
 }
 
 .full {
 }
 
-#screen {
-    position: absolute;
-    left: 128px;
-    top: 80px;
-    width: 512px;
-    height: 384px;
-    z-index: -1;
-    border: 30px solid #000;
-}
-
 #tv {
     position: relative;
-    width: 1000px;
-    height: 680px;
-    background: url('Images/old-television.png') no-repeat 0 0;
+    width: 540px;
+    height: 440px;
+    background-color: grey;
 }
 
 #controls {
     position: absolute;
-    bottom: 40px;
-    left: 155px;
+    bottom: 4px;
+    left: 8px;
+}
+
+#screen {
+    position: absolute;
+    left: 1px;
+    top: 1px;
+    width: 512px;
+    height: 384px;
+    border: 13px solid #000;
 }
 
 #mykeyboard {
     position: relative;
-    top: 665px;
-    left: 140px;
+    left: 0px;
+    top: 445px;
     width: 600px;
     height: 300px;
     background: url('Images/mc10keyboard.jpg') no-repeat 0 0;
 }
 
-#babble {
-    position: absolute;
-    top: 40px;
-    left: 1000px;
-    width: 400px;
-    background: #fff;
-    border: solid 2px #000;
-    padding: 10px;
-}
-
-#about {
-    font-size: 10px;
-    position: absolute;
-    bottom: -10px;
-    left: 350px;
-    color: #555;
+#debugger {
+    position: relative;
+    resize: none;
+    top: -440px;
+    left: 550px;
+    width: 540px;
+    height: 673px;
+    font-family:Consolas,Monaco,Courier,monospace;
+    color: #fff;
+    background-color: #000;
+    padding: 5px;
 }
 
 p {
