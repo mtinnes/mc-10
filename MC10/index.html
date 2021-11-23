@@ -8,7 +8,7 @@
     <title>MC-10 Javascript Emulator</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="mc10.css?v=6">
+    <link rel="stylesheet" href="mc10.css?v=7">
     <meta property="og:title" content="MC-10 Emulator in Javascript" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="http://mc-10.com/Images/mc10_ss.jpg" />
@@ -22,10 +22,9 @@
             Your browser is not supported. Try Google Chrome.
         </canvas>
         <div id="controls">
-            <input id="reset" type="button" value="Reset" />
-            <input type="button" id="quicktype" value="QuickType&#153;" />
-            <input type="button" id="play" name="play" value="Play" />
-            <input type="button" id="record" name="record" value="Record" />
+            <input type="button" id="reset" value="Reset" />
+            <input type="file" id="play" />
+            <input type="button" id="record" name="record" value="Record"/>
         </div>
         <div id="mykeyboard">
         </div>
@@ -46,14 +45,10 @@ For MICROCOLOR BASIC programs:
    Use Shift+@ to pause a BASIC program.  Press any other key to resume.
    Use ESC to emulate the BREAK key.
 
-"QuickType" will redirect the keyboard input routine to a file.
-   You can use this to type in a BASIC file.
-   QuickType is a trademark of James "The Animal" Tamer popularized
-   in his amazing Virtual MC-10 emulator.
-
 "Play" will start reading a file.
    If the file is a .c10 or a .wav file it will emulate cassette playback.
    (You will need to previously enter a CLOAD, CLOADM, or CLOAD* command).
+   Otherwise, the file will be redirected to the console input.
 
 "Record" can be pressed before typing CSAVE or CSAVE*.
    You'll get prompted for a filename once it's all done.
@@ -62,7 +57,7 @@ For MICROCOLOR BASIC programs:
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script>        window.jQuery || document.write('<script src="js/libs/jquery-1.7.1.min.js"><\/script>')</script>
-    <script src="MC10.js" type="text/javascript"></script>
+    <script src="MC10.js?v=1" type="text/javascript"></script>
     <script type="text/javascript">
         var mc10 = new MC10({ maxRam: 0x8fff });
         var charBuffer = [];
@@ -91,20 +86,8 @@ For MICROCOLOR BASIC programs:
         $("#paste").bind("click", function (e) {
         });
 
-        $("#quicktype").bind("click", function (e) {
-            var input = $(document.createElement('input'));
-            input.attr("type","file");
-            input.attr("onchange","quickTypeFile(this)");
-            input.trigger('click');
-            return false;
-        });
-
-        $("#play").bind("click", function(e) {
-            var input = $(document.createElement('input'));
-            input.attr("type","file");
-            input.attr("onchange","playFile(this)");
-            input.trigger('click');
-            return false;
+        $("#play").bind("change", function (e) {
+           playFile(e);
         });
 
         $("#record").bind("click", function (e) {
@@ -142,18 +125,7 @@ For MICROCOLOR BASIC programs:
             document.body.removeChild(element);
         }
 
-        function quickTypeFile(target) {
-            var reader = new FileReader();
-            var txtReader = function (e) {
-                var buffer = reader.result;
-                mc10.keyboard.quicktype(buffer);
-            }
-            var playfile = target.files[0];
-            reader.onload = txtReader;
-            reader.readAsArrayBuffer(playfile);
-        }
-
-        function playFile(target) {
+        function playFile(e) {
             var reader = new FileReader();
             var wavReader = function (e) {
                     var buffer = reader.result;
@@ -172,7 +144,8 @@ For MICROCOLOR BASIC programs:
                 var buffer = reader.result;
                 mc10.keyboard.quicktype(buffer);
             }
-            var playfile = target.files[0];
+
+            var playfile = e.target.files[0];
             var filetype = playfile.name.split('.').pop().toLowerCase();
             reader.onload = filetype == 'wav' ? wavReader : 
                             filetype == 'c10' ? c10Reader :
