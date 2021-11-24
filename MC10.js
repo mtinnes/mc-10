@@ -342,6 +342,8 @@ MC10.MC6803.prototype = {
             if (lastpc == 0xff22) {
                 this.F_CARRY = this.mc10.cassette.getC10bit();
                 opcode = 0x39;
+            } else if (lastpc == 0xfdcf) {
+                this.mc10.cassette.stop();
             } else if (lastpc > 0xff2c && lastpc <= 0xff98) {
                 opcode = 0x39;
             } else if (lastpc == 0xfd03 && this.mc10.cassette.recording) {
@@ -2954,11 +2956,19 @@ MC10.KBD.prototype = {
 
         if (this.textIndex >= this.textBuffer.length) {
             this.patchROM = false;
-            console.log('text entered.');
+            this.quickstop();
         }
+
         return byte==10 ? 13 : 
                byte==13 ? 0 : 
                           byte;
+    },
+
+    quickstop: function () {
+        console.log('text entered.');
+        if (this.mc10.playbackFinishedCallback !== undefined) {
+          this.mc10.playbackFinishedCallback();
+        }
     },
 
     reset: function() {
@@ -3017,7 +3027,10 @@ MC10.Cassette.prototype = {
 
     // callback function for stop event
     stop: function() {
-        console.log("Auto-stop")
+        console.log("C10 playback stopped");
+        if (this.mc10.playbackFinishedCallback !== undefined) {
+          this.mc10.playbackFinishedCallback();
+        }
     },
 
     playC10: function (c10data) {

@@ -81,6 +81,7 @@ For MICROCOLOR BASIC programs:
 
         $("#reset").bind("mouseup", function (e) {
             mc10.resetUp();
+            resetPlayerFilename();
         });
 
         $("#paste").bind("click", function (e) {
@@ -101,6 +102,10 @@ For MICROCOLOR BASIC programs:
             mc10.reset();
             mc10.run();
         });
+
+        function resetPlayerFilename() {
+            $("#play")[0].value = "";
+        }
 
         function arrayBufferToBase64(buffer) {
             var binary = ''
@@ -126,6 +131,8 @@ For MICROCOLOR BASIC programs:
         }
 
         function playFile(e) {
+            mc10.playbackFinishedCallback = resetPlayerFilename.bind(this);
+
             var reader = new FileReader();
             var wavReader = function (e) {
                     var buffer = reader.result;
