@@ -1455,19 +1455,40 @@ MC10.MC6803.prototype = {
     },
 
     STAI: function () { // undocumented opcode $87
-        this.storeImmediateByte(this.REG_A[0]);
+        this.fetch();
+        this.F_SIGN = 1;
+        this.F_ZERO = 0;
+        this.F_OVERFLOW = 0;
     },
     STBI: function () { // undocumented opcode $C7
-        this.storeImmediateByte(this.REG_B[0]);
+        this.fetch();
+        this.F_SIGN = 1;
+        this.F_ZERO = 0;
+        this.F_OVERFLOW = 0;
     },
     STDI: function () { // undocumented opcode $CD
-        this.storeImmediateWord(this.REG_D[0]);
+        this.fetch();
+        this.setMemory(this.REG_PC, this.REG_D[0] & 0xff);
+        this.fetch();
+        this.F_SIGN = 1;
+        this.F_ZERO = 0;
+        this.F_OVERFLOW = 0;
     },
     STSI: function () { // undocumented opcode $8F
-        this.storeImmediateWord2(this.REG_SP);
+        this.fetch();
+        this.setMemory(this.REG_PC, 0xff);
+        this.fetch();
+        this.F_SIGN = 1;
+        this.F_ZERO = 0;
+        this.F_OVERFLOW = 0;
     },
     STXI: function () { // undocumented opcode $CF
-        this.storeImmediateWord2(this.REG_IP);
+        this.fetch();
+        this.setMemory(this.REG_PC, this.REG_IP & 0xff);
+        this.fetch();
+        this.F_SIGN = 1;
+        this.F_ZERO = 0;
+        this.F_OVERFLOW = 0;
     },
 
     STAA: function () {
@@ -2233,30 +2254,6 @@ MC10.MC6803.prototype = {
         return this.shiftRight(first, 3);
     },
 
-    storeImmediateByte: function (first) {
-        this.fetch();
-        this.F_SIGN = 1;
-        this.F_ZERO = 0;
-        this.F_OVERFLOW = 0;
-    },
-    storeImmediateWord: function (first) {
-        this.fetch();
-        this.setMemory(this.REG_PC, first & 0xff);
-        this.fetch();
-        this.F_SIGN = 1;
-        this.F_ZERO = 0;
-        this.F_OVERFLOW = 0;
-    },
-    storeImmediateWord2: function (first) {
-        this.fetch();
-        this.setMemory(this.REG_PC, first & 0xff);
-        this.fetch();
-        this.set16NZ(first & 0xffff);
-        this.F_SIGN = 1;
-        this.F_ZERO = 0;
-        this.F_OVERFLOW = 0;
-    },
-
     set8N: function (value) {
         this.F_SIGN = (value & 0x80) >> 7;
     },
@@ -2592,7 +2589,7 @@ MC10.MC6847.SG4CharacterSet = [
     //1
     [0x00, 0x00, 0x00, 0x08, 0x18, 0x08, 0x08, 0x08, 0x08, 0x1c, 0x00, 0x00],
     //2
-    [0x00, 0x00, 0x00, 0x1c, 0x22, 0x02, 0x1e, 0x20, 0x20, 0x3e, 0x00, 0x00],
+    [0x00, 0x00, 0x00, 0x1c, 0x22, 0x02, 0x1c, 0x20, 0x20, 0x3e, 0x00, 0x00],
     //3
     [0x00, 0x00, 0x00, 0x1c, 0x22, 0x02, 0x0c, 0x02, 0x22, 0x1c, 0x00, 0x00],
     //4
@@ -2618,7 +2615,7 @@ MC10.MC6847.SG4CharacterSet = [
     //>
     [0x00, 0x00, 0x00, 0x20, 0x10, 0x08, 0x04, 0x08, 0x10, 0x20, 0x00, 0x00],
     //?
-    [0x00, 0x00, 0x00, 0x1c, 0x22, 0x02, 0x04, 0x08, 0x00, 0x08, 0x00, 0x00]
+    [0x00, 0x00, 0x00, 0x18, 0x24, 0x04, 0x08, 0x08, 0x00, 0x08, 0x00, 0x00]
 ]; //SG4CharacterSet
 
 MC10.MC6847.Palette = [
