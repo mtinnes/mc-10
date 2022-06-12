@@ -1529,8 +1529,6 @@ MC10.MC6803.prototype = {
         this.REG_D[0] = this.subtract16(this.REG_D[0], this.fetchData16());
     },
     SWI: function () {
-        console.debug("SWI Called - Exit");
-
         this.pushStack16(this.REG_PC);
         this.pushStack16(this.REG_IP);
         this.pushStack(this.REG_A[0]);
@@ -1539,7 +1537,8 @@ MC10.MC6803.prototype = {
 
         this.SEI();
 
-        this.REG_PC = this.fetchMemory(0xfffa) & 0xffff;
+        this.REG_PC = ((this.fetchMemory(0xfffa) << 8) |
+                       (this.fetchMemory(0xfffb) & 0xff)) & 0xffff;
         this.REG_PC &= 0xffff;
 
         //                    return;
