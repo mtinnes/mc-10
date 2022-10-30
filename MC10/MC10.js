@@ -241,6 +241,9 @@ MC10.prototype = {
     },
 
     load: function (buffer) {
+
+        this.vdg.reset();
+
         var dv = new Uint8Array(buffer);
 
         var idx = 0;
@@ -1037,7 +1040,7 @@ MC10.MC6803.prototype = {
 
         //NGCB	
         this.optable[0x52] = function () { self.memmode = self.INHERENT; self.NGCB(); return 2; };
-        
+
         //ORAA	
         this.optable[0x8a] = function () { self.memmode = self.IMMEDIATE; self.ORAA(); return 2; };
         this.optable[0x9a] = function () { self.memmode = self.DIRECT; self.ORAA(); return 3; };
@@ -1861,7 +1864,7 @@ MC10.MC6803.prototype = {
         // - to see this on the emulator, POKE 17032,95
         // pressing the keys affect the video display of reads from 0x9000-0xbfff with 16K RAM.  
         // Note that we haven't completely emulated the return yet.
-                
+
         if (0x9000 <= address && address <= 0xbfff) {
             var ret =
                 (~this.memory[0x02] & 0x01 ? this.port1[0] : 0xff) &
@@ -1959,7 +1962,6 @@ MC10.MC6803.prototype = {
 
                 default:
                     console.debug("FATAL: Attempted to read to reserved internal register area:" + address);
-                    //           printf("(%x) Attempted to read to reserved internal register area %x.\n",optable[0x00]->Program_Counter-1,address);
                     return 0x00;
             }
         }
@@ -2030,10 +2032,10 @@ MC10.MC6803.prototype = {
             this.memory[address] = value;
             if (this.mc10.vdg.vramIs4k) {
                 if (address < 0x5000) {
-                   this.mc10.vdg.updateDisplay(address & 0x0fff, value);
-                   if (this.mc10.vdg.graphicsMode == 11 || this.mc10.vdg.graphicsMode == 15) {
-                       this.mc10.vdg.updateDisplay(address & 0x0fff | 0x1000, value);
-                   }
+                    this.mc10.vdg.updateDisplay(address & 0x0fff, value);
+                    if (this.mc10.vdg.graphicsMode == 11 || this.mc10.vdg.graphicsMode == 15) {
+                        this.mc10.vdg.updateDisplay(address & 0x0fff | 0x1000, value);
+                    }
                 }
             } else {
                 this.mc10.vdg.updateDisplay(address - 0x4000, value);
@@ -2282,11 +2284,11 @@ MC10.MC6803.prototype = {
     },
 
     negate: function (first) {
-        return this.subtract(0,first);
+        return this.subtract(0, first);
     },
 
     negateCarry: function (first) {
-        return this.subtractCarry(0,first);
+        return this.subtractCarry(0, first);
     },
 
     or: function (first, second) {
@@ -2775,14 +2777,6 @@ MC10.MC6847.prototype = {
         this.ctx.fillStyle = "black";
         this.ctx.fillRect(0, 0, 512, 384);
         this.imageData = this.ctx.getImageData(0, 0, 512, 384);
-        try {
-            // Fix up for prefixing
-            window.AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.audioCtx = new AudioContext();
-        }
-        catch (e) {
-            console.log('Web Audio API is not supported in this browser');
-        }
         this.audioNode = null;
         this.audioBuffer = null;
         this.audioTimer;
@@ -2801,17 +2795,30 @@ MC10.MC6847.prototype = {
         this.ctx.fillStyle = "black";
         this.ctx.fillRect(0, 0, 512, 384);
 
-        var self = this;
-        if (this.audioCtx != null) {
-            this.sampleRate = this.audioCtx.sampleRate;
-            if (this.audioCtx.createScriptProcessor) {
-                this.audioNode = this.audioCtx.createScriptProcessor(2048, 1, 1);
-            } else {
-                this.audioNode = this.audioCtx.createJavaScriptNode(2048, 1, 1);
-            }
-            this.audioNode.onaudioprocess = function (e) { self.processAudio(e); }
-            this.audioNode.connect(this.audioCtx.destination);
-        }
+        this.initAudio();
+
+        //var self = this;
+        //if (!this.audioCtx) {
+        //    try {
+        //        // Fix up for prefixing
+        //        window.AudioContext = window.AudioContext || window.webkitAudioContext;
+        //        this.audioCtx = new AudioContext();
+        //    }
+        //    catch (e) {
+        //        console.log('Web Audio API is not supported in this browser');
+        //    }
+        //}
+        //if (this.audioCtx != null && !this.sampleRate) {
+        //    this.sampleRate = this.audioCtx.sampleRate;
+        //    if (this.audioCtx.createScriptProcessor) {
+        //        this.audioNode = this.audioCtx.createScriptProcessor(2048, 1, 1);
+        //    } else {
+        //        this.audioNode = this.audioCtx.createJavaScriptNode(2048, 1, 1);
+        //    }
+        //    this.audioNode.onaudioprocess = function (e) { self.processAudio(e); }
+        //    this.audioNode.connect(this.audioCtx.destination);
+        //    this.audioCtx.resume();
+        //}
     },
 
     scaleImageData: function (imageData, scale) {
@@ -2867,12 +2874,10 @@ MC10.MC6847.prototype = {
         // 13   128x192x2 (RG3)
         // 15   256x192x2 (RG6)
 
-        var pixPerByte  = 8;
-        var hPixSize    = this.graphicsMode == 15 ? 2 : 4;
+        var pixPerByte = 8;
+        var hPixSize = this.graphicsMode == 15 ? 2 : 4;
         var bytesPerRow = this.graphicsMode == 15 ? 32 : 16;
-        var vPixSize    = this.graphicsMode == 12 ? 6 :
-                          this.graphicsMode == 14 ? 4 :
-                                                    2;
+        var vPixSize = this.graphicsMode == 12 ? 6 : this.graphicsMode == 14 ? 4 : 2;
 
         var screenX = (pos % bytesPerRow) * hPixSize * pixPerByte;
         var screenY = (pos - pos % bytesPerRow) / bytesPerRow * vPixSize;
@@ -2884,11 +2889,11 @@ MC10.MC6847.prototype = {
         var tval = val & 0xff;
 
         for (var i = 0; i < pixPerByte; i++) {
-            var color = tval&0x80 ? bgColor : fgColor;
+            var color = tval & 0x80 ? bgColor : fgColor;
             tval <<= 1;
             for (var x = 0; x < hPixSize; x++) {
                 for (var y = 0; y < vPixSize; y++) {
-                    var idx0 = ((screenY + y) * 512 + screenX + x + i*hPixSize) * 4;
+                    var idx0 = ((screenY + y) * 512 + screenX + x + i * hPixSize) * 4;
                     data[idx0] = MC10.MC6847.Palette[color][0];
                     data[idx0 + 1] = MC10.MC6847.Palette[color][1];
                     data[idx0 + 2] = MC10.MC6847.Palette[color][2];
@@ -2903,12 +2908,10 @@ MC10.MC6847.prototype = {
         // 9    128x96x4 (CG3)
         // 11   128x192x4 (CG6)
 
-        var pixPerByte  = 4;
-        var hPixSize    = this.graphicsMode == 8 ? 8 : 4;
+        var pixPerByte = 4;
+        var hPixSize = this.graphicsMode == 8 ? 8 : 4;
         var bytesPerRow = this.graphicsMode == 8 ? 16 : 32;
-        var vPixSize    = this.graphicsMode == 11 ? 2 :
-                          this.graphicsMode ==  9 ? 4 :
-                                                    6;
+        var vPixSize = this.graphicsMode == 11 ? 2 : this.graphicsMode == 9 ? 4 : 6;
 
         var screenX = (pos % bytesPerRow) * hPixSize * pixPerByte;
         var screenY = (pos - pos % bytesPerRow) / bytesPerRow * vPixSize;
@@ -2922,7 +2925,7 @@ MC10.MC6847.prototype = {
             tval <<= 2;
             for (var x = 0; x < hPixSize; x++) {
                 for (var y = 0; y < vPixSize; y++) {
-                    var idx0 = ((screenY + y) * 512 + screenX + x + i*hPixSize) * 4;
+                    var idx0 = ((screenY + y) * 512 + screenX + x + i * hPixSize) * 4;
                     data[idx0] = MC10.MC6847.Palette[color][0];
                     data[idx0 + 1] = MC10.MC6847.Palette[color][1];
                     data[idx0 + 2] = MC10.MC6847.Palette[color][2];
@@ -2939,12 +2942,12 @@ MC10.MC6847.prototype = {
         var color;
 
         if (val <= 0x7f) {
-            bgColorIndex =  9 + this.palette + ((val & 0x40)>>5);
-            fgColorIndex = 11 + this.palette - ((val & 0x40)>>5);
-            
+            bgColorIndex = 9 + this.palette + ((val & 0x40) >> 5);
+            fgColorIndex = 11 + this.palette - ((val & 0x40) >> 5);
+
             for (var i = 0; i < 12; i++) {
-                block[i] = this.graphicsMode & 1 ? val & 0x7f : 
-                                                   MC10.MC6847.SG4CharacterSet[val & 0x3f][i];
+                block[i] = this.graphicsMode & 1 ? val & 0x7f :
+                    MC10.MC6847.SG4CharacterSet[val & 0x3f][i];
             }
         } else if (this.graphicsMode & 1) {
             bgColorIndex = 8;
@@ -2994,6 +2997,34 @@ MC10.MC6847.prototype = {
         }
     },
 
+    initAudio: function () {
+        if (!this.audioCtx) {
+            try {
+                // Fix up for prefixing
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.audioCtx = new AudioContext();
+
+                var self = this;
+                this.sampleRate = this.audioCtx.sampleRate;
+                if (this.audioCtx.createScriptProcessor) {
+                    this.audioNode = this.audioCtx.createScriptProcessor(2048, 1, 1);
+                } else {
+                    this.audioNode = this.audioCtx.createJavaScriptNode(2048, 1, 1);
+                }
+                this.audioNode.onaudioprocess = function (e) { self.processAudio(e); }
+                this.audioNode.connect(this.audioCtx.destination);
+            }
+            catch (e) {
+                console.log('Web Audio API is not supported in this browser');
+            }
+        }
+        // Modern browsers require user input in order to utilize the audio context.
+        // Inital state of audio context will be suspended in this case and cannot be resumed until a user has interacted with the app.
+        if (this.audioCtx && this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume();
+        }
+    },
+
     processAudio2: function (e) {
         var data = e.outputBuffer.getChannelData(0);
         var phaseIncrement = 2 * Math.PI * this.frequency / this.sampleRate;
@@ -3031,7 +3062,6 @@ MC10.MC6847.prototype = {
 
         this.sampleValue = sampleValue;
     },
-
 
     updateAudio: function () {
         this.abuf.push(this.toggleSpeaker);

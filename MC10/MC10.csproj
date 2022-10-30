@@ -34,6 +34,7 @@
     <SccProvider>
     </SccProvider>
     <UseGlobalApplicationHostFile />
+    <Use64BitIISExpress />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -75,7 +76,6 @@
     <Content Include="favicon.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="google44e3b36e31ed0d63.html" />
     <Content Include="images\139100-trs80.jpg" />
     <Content Include="images\bg.jpg" />
     <Content Include="images\old-television.png" />
@@ -235,6 +235,9 @@
     <Content Include="cassettes\MC_FLAGON_BIRD.c10">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="cassettes\COLOSSAL.C10" />
+    <Content Include="cassettes\guntus.c10" />
+    <Content Include="cassettes\PUMPKIN.C10" />
     <None Include="Properties\PublishProfiles\Profile1.pubxml" />
   </ItemGroup>
   <PropertyGroup>
