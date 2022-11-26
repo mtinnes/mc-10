@@ -120,6 +120,8 @@ var MC10 = function (opts) {
     this.keyboard = new MC10.KBD(this);
     this.cassette = new MC10.Cassette(this);
     this.debugger = document.getElementById("debugger");
+    this.frameTick = this.frame.bind(this);
+    this.lastFrameTime = 0;
 };
 
 // BASIC ROM
@@ -161,21 +163,37 @@ MC10.prototype = {
     run: function () {
         if (!this.isRunning) {
             this.isRunning = true;
-            this.cycleInterval = setInterval(function () {
-                this.frame();
-            }.bind(this), this.frameTime);
+
+            //var frameTick = this.frame.bind(this);
+
+            requestAnimationFrame(this.frameTick);
+
+            // this.cycleInterval = setInterval(
+            //     frameTick,
+            //     this.frameTime
+            // );
             // this.debugger.value = "running...";
         }
     },
 
     pause: function () {
         if (this.isRunning) {
-            clearInterval(this.cycleInterval);
+            //clearInterval(this.cycleInterval);
             this.isRunning = false;
         }
     },
 
     frame: function () {
+        if (!this.isRunning) return;
+
+        requestAnimationFrame(this.frameTick);
+
+        let now = Math.round(
+            (this.opts.preferredFrameRate * Date.now()) / 1000
+        );
+        if (now == this.lastFrameTime) return;
+        this.lastFrameTime = now;
+
         var cpu = this.cpu;
         var breakon = this.clockRate / this.actualFrameRate;
         var cycles = 0;
@@ -189,6 +207,38 @@ MC10.prototype = {
         }
         this.vdg.paintFrame();
     },
+
+    // run: function () {
+    //     if (!this.isRunning) {
+    //         this.isRunning = true;
+    //         this.cycleInterval = setInterval(function () {
+    //             this.frame();
+    //         }.bind(this), this.frameTime);
+    //         // this.debugger.value = "running...";
+    //     }
+    // },
+
+    // pause: function () {
+    //     if (this.isRunning) {
+    //         clearInterval(this.cycleInterval);
+    //         this.isRunning = false;
+    //     }
+    // },
+
+    // frame: function () {
+    //     var cpu = this.cpu;
+    //     var breakon = this.clockRate / this.actualFrameRate;
+    //     var cycles = 0;
+    //     while (cycles < breakon) {
+    //         var cnt = cpu.emulate();
+    //         this.cassette.advance(cnt);
+    //         cycles += cnt;
+    //         for (var i = 0; i < cnt; i++) {
+    //             this.vdg.updateAudio();
+    //         }
+    //     }
+    //     this.vdg.paintFrame();
+    // },
 
     record: function (autoStop) {
         this.cassette.recordC10(autoStop);  
