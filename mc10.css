@@ -7,7 +7,7 @@ html {
 
 body {
     font-family: 'Press Start 2P', cursive;
-    background: url('/Images/bg.jpg') repeat-x 0 0;
+    background: url('/images/bg.jpg') repeat-x 0 0;
 }
 
 .full {
@@ -27,7 +27,7 @@ body {
     position: relative;
     width: 1000px;
     height: 680px;
-    background: url('/Images/old-television.png') no-repeat 0 0;
+    background: url('/images/old-television.png') no-repeat 0 0;
 }
 
 #controls {
