@@ -100,7 +100,8 @@ FiniteBuffer.prototype.push = function (v) {
 var MC10 = function (opts) {
     this.opts = {
         maxRam: 0x8fff,
-        preferredFrameRate: 60
+        preferredFrameRate: 60,
+        onDebug: function () { console.debug('Debug handler not defined'); }
     };
     if (typeof opts != 'undefined') {
         var key;
@@ -119,9 +120,18 @@ var MC10 = function (opts) {
     this.vdg = new MC10.MC6847(this);
     this.keyboard = new MC10.KBD(this);
     this.cassette = new MC10.Cassette(this);
-    this.debugger = document.getElementById("debugger");
-    this.frameTick = this.frame.bind(this);
+    this.frameTick = this.frame.bind(this, false);
     this.lastFrameTime = 0;
+
+    this.isDebugging = false;
+    this.onDebug = this.opts.onDebug;
+    this.historyBuffer = new Array();
+    this.historyBuffer.push = function() {
+        if (this.length >= 50) {
+            this.shift();
+        }
+        return Array.prototype.push.apply(this,arguments);
+    };
 };
 
 // BASIC ROM
@@ -138,12 +148,19 @@ MC10.ROM = [0xF2, 0xBA, 0xF3, 0x35, 0xF2, 0xD5, 0x42, 0x15, 0xF6, 0x2A, 0xF5, 0x
 
 MC10.prototype = {
     isRunning: false,
+    isDebugging: false,
 
     reset: function () {
         this.vdg.reset();
         this.cpu.reset();
         this.keyboard.reset();
         this.cassette.reset();
+
+        setInterval(function() {
+            if (this.isDebugging) {
+                this.onDebug();
+            }
+        }.bind(this), 500)
     },
 
     resetDown: function () {
@@ -183,8 +200,17 @@ MC10.prototype = {
         }
     },
 
-    frame: function () {
-        if (!this.isRunning) return;
+    toggleDebug: function () {
+        this.isDebugging = !this.isDebugging;
+        return this.isDebugging;
+    },
+
+    step: function () {
+        this.frame(true);
+    },
+
+    frame: function (step) {
+        if (!this.isRunning && !step) return;
 
         requestAnimationFrame(this.frameTick);
 
@@ -197,12 +223,35 @@ MC10.prototype = {
         var cpu = this.cpu;
         var breakon = this.clockRate / this.actualFrameRate;
         var cycles = 0;
-        while (cycles < breakon) {
+        while ((cycles < breakon)) {
             var cnt = cpu.emulate();
             this.cassette.advance(cnt);
             cycles += cnt;
             for (var i = 0; i < cnt; i++) {
                 this.vdg.updateAudio();
+            }
+            
+            if (this.isDebugging) {
+                this.historyBuffer.push({
+                    cycle: cnt,
+                    diffCycle: this.cycleCount - this.historyBuffer[0]?.cycle,
+                    pc: this.cpu.REG_PC.toString(16),
+                    inst: this.cpu.disassemble(this.cpu.REG_PC),
+                    flags: {
+                        c: this.cpu.F_CARRY,
+                        o: this.cpu.F_OVERFLOW,
+                        z: this.cpu.F_ZERO,
+                        s: this.cpu.F_SIGN,
+                        i: this.cpu.F_INTERRUPT,
+                        h: this.cpu.F_HALFCARRY
+                    }
+                });
+                var cycleCount = 0;
+                this.historyBuffer.slice().reverse().forEach(function(val, idx) {
+                    if (idx === 0) val.diffCycle = 0; else
+                    val.diffCycle = cycleCount -= val.cycle;
+                });
+                if (step) break;
             }
         }
         this.vdg.paintFrame();
@@ -594,6 +643,7 @@ MC10.MC6803.prototype = {
             this.checkTimer();
             return 1;
         }
+
 
 //      if (this.REG_PC>=0x60B6 && this.REG_PC<=0xE000 && this.mc10.debugger.value == "running...") {
 //          this.mc10.debugger.value = 
@@ -2620,24 +2670,24 @@ MC10.MC6803.prototype = {
             var dest = this.fetchMemory((address + 1) & 0xffff);
             dest = dest & 0x80 ? dest | 0xff00 : dest;
             dest = (address + 2 + dest) & 0xffff;
-            return(address.toString(16) + " " + opstr + "  " + dest.toString(16));
+            return(opstr + "  " + dest.toString(16));
         } else if ((op & 0xf0) == 0x60 | (op & 0xf0) == 0xa0 | (op & 0xf0) == 0xe0) { //indexed
             var offset = this.fetchMemory((address + 1) & 0xffff);
-            return(address.toString(16) + " " + opstr + "  " + offset.toString(16) + ",X");
+            return(opstr + "  " + offset.toString(16) + ",X");
         } else if ((op & 0xf0) == 0x70 | (op & 0xf0) == 0xb0 | (op & 0xf0) == 0xf0) { // extended
             var mem16 = (this.fetchMemory((address + 1) & 0xffff) << 8) + this.fetchMemory((address + 2) & 0xffff);
-            return(address.toString(16) + " " + opstr + "  " + mem16.toString(16));
+            return(opstr + "  " + mem16.toString(16));
         } else if ((op & 0xf0) == 0x90 | (op & 0xf0) == 0xd0) { // direct
             var mem8 = this.fetchMemory((address + 1) & 0xffff);
-            return(address.toString(16) + " " + opstr + "  " + mem8.toString(16));
+            return(opstr + "  " + mem8.toString(16));
         } else if ((op & 0xf0) == 0x80 | (op & 0xf0) == 0xc0) {
             var imm = this.fetchMemory((address + 1) & 0xffff);
             if ((op & 0xf) == 0x3 | (op & 0xf) > 0xb) {
                 imm = (imm << 8) + this.fetchMemory((address + 2) & 0xffff);
             }
-            return(address.toString(16) + " " + opstr + " #" + imm.toString(16));
+            return(opstr + " #" + imm.toString(16));
         } else {
-            return(address.toString(16) + " " + opstr);
+            return(opstr);
         }
     }
 }

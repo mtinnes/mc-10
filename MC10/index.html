@@ -16,10 +16,12 @@
     <title>MC-10 Javascript Emulator</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
-    <link href='https://fonts.googleapis.com/css?family=Press+Start+2P' rel='stylesheet' type='text/css'>
+    <script src="https://kit.fontawesome.com/5f89775b0b.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400&family=Press+Start+2P&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="mc10.css?v=6">
-    <script src="https://apis.google.com/js/platform.js" async defer>
-    </script>
+    <script src="//apis.google.com/js/platform.js" async defer></script>
+    <script src="//unpkg.com/eta" type="module" async defer></script>
     <meta property="og:title" content="MC-10 Emulator in Javascript" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://mc-10.com/images/mc10_ss.jpg" />
@@ -46,6 +48,7 @@
         <div id="controls">
             <input id="reset" type="button" value="Reset" />
             <input type="button" id="record" value="Start Record" />
+            <input type="button" id="debug" value="Debugger" />
             <input type="file" id="wavcassette" name="wavcassette" />
             <select id="cassetteList" name="cassetteList">
                 <option value="">- Select Cassette -</option>
@@ -182,15 +185,73 @@
         <input type="hidden" id="cassette-data" name="cassette-data" />
         <input type="hidden" id="filename" name="filename" />
     </form>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+
+    <div id="debugger">
+        <div id="header">
+            <h2><i class="fa-sharp fa-solid fa-bugs"></i> Debugger</h2>
+            <div id="close">
+                <i class="fa-sharp fa-solid fa-rectangle-xmark"></i>
+            </div>
+        </div>
+        <div id="history">
+        </div>
+        <div id="debugcontrols">
+            <button onclick="mc10.pause()"><i class="fa-sharp fa-solid fa-pause"></i> Break</button>
+            <button onclick="mc10.step()">Step</button>
+            <button onclick="mc10.run()"><i class="fa-sharp fa-solid fa-play"></i> Run</button>
+        </div>
+    </div>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"
+        integrity="sha512-aVKKRRi/Q/YV+4mjoKBsE4x3H+BkegoM/em46NNlCqNTmUYADjBbeNefNxYV7giUp0VxICtqdrbqU7iVaeZNXA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="//code.jquery.com/ui/1.13.2/jquery-ui.min.js"
+        integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0=" crossorigin="anonymous"></script>
     <script>window.jQuery || document.write('<script src="js/libs/jquery-1.7.1.min.js"><\/script>')</script>
     <script src="MC10.js?v=1" type="text/javascript"></script>
     <script type="text/javascript">
-        var mc10 = new MC10({ maxRam: 0x8fff });
+        var mc10 = new MC10({
+            maxRam: 0x8fff,
+            onDebug: function () {
+                debug();
+            }
+        });
         var charBuffer = [];
         var idx = 0;
 
-        jQuery.event.props.push('dataTransfer');
+        var historyTemplate = '<table> \
+            <thead> \
+                <tr> \
+                    <th></th> \
+                    <th>Cycle</th> \
+                    <th>PC</th> \
+                    <th>Inst</th> \
+                    <th>Flags</th> \
+                </tr> \
+            </thead> \
+            <tbody id="instructions"> \
+                <% it.forEach(item => { %> \
+                    <tr> \
+                        <td class="icon"><div></div></td> \
+                        <td class="cycle"><%= item.diffCycle %></td> \
+                        <td class="pc"><%= item.pc %></td> \
+                        <td class="inst"><%= item.inst %></td> \
+                        <td class="flags"><%~ include("flags", item) %></td> \
+                    </tr> \
+                <% }) %> \
+            </tbody> \
+        </table>';
+
+        var flagsTemplate = '<div id="flags"> \
+            <% if (it.flags.c === 1) { %><div class="set">C</div><% } else { %><div>.</div><% } %> \
+            <% if (it.flags.o === 1) { %><div class="set">V</div><% } else { %><div>.</div><% } %> \
+            <% if (it.flags.z === 1) { %><div class="set">Z</div><% } else { %><div>.</div><% } %> \
+            <% if (it.flags.s === 1) { %><div class="set">N</div><% } else { %><div>.</div><% } %> \
+            <% if (it.flags.i === 1) { %><div class="set">I</div><% } else { %><div>.</div><% } %> \
+            <% if (it.flags.h === 1) { %><div class="set">H</div><% } else { %><div>.</div><% } %> \
+            </div>';
+
+        //jQuery.event.props.push('dataTransfer');
 
         $(document).bind('dragover dragend', function (e) {
             return false;
@@ -207,6 +268,16 @@
         });
 
         $("#paste").bind("click", function (e) {
+        });
+
+        $("#debug, #close").bind("click", function (e) {
+            var toggle = mc10.toggleDebug();
+            if (toggle) {
+                $("#debugger").show();
+            } else {
+                $("#debugger").hide();
+                mc10.run();
+            }
         });
 
         $("#wavcassette").bind("change", function (e) {
@@ -227,7 +298,18 @@
         $(document).ready(function () {
             mc10.reset();
             mc10.run();
+
+            $("#debugger").draggable({ handle: "#header" });
         });
+
+        function debug() {
+            if (Eta !== undefined) {
+                Eta.templates.define('flags', Eta.compile(flagsTemplate));
+
+                var html = Eta.render(historyTemplate, mc10.historyBuffer.slice().reverse());
+                document.getElementById('history').innerHTML = html;
+            }
+        }
 
         function arrayBufferToBase64(buffer) {
             var binary = ''
@@ -274,7 +356,7 @@
             var playfile = evt.target.files[0];
             var filetype = playfile.name.split('.').pop().toLowerCase();
             reader.onload = filetype == 'wav' ? wavReader :
-                filetype == 'C10' ? c10Reader :
+                filetype == 'c10' ? c10Reader :
                     txtReader;
             reader.readAsArrayBuffer(playfile);
         }
