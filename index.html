@@ -47,8 +47,9 @@
         </canvas>
         <div id="controls">
             <input id="reset" type="button" value="Reset" />
-            <input type="button" id="record" value="Start Record" />
-            <input type="button" id="debug" value="Debugger" />
+            <input type="button" id="record" value="Record" />
+            <input type="button" id="debug" value="Debug" />
+            <input type="button" id="kbd" value="Keyboard" />
             <input type="file" id="wavcassette" name="wavcassette" />
             <select id="cassetteList" name="cassetteList">
                 <option value="">- Select Cassette -</option>
@@ -170,7 +171,7 @@
                     Use ESC to emulate the BREAK key.
                 </p>
                 <p>
-                    The "Start Record" button can be pressed before typing CSAVE or CSAVE*. You'll get prompted for a
+                    The "Record" button can be pressed before typing CSAVE or CSAVE*. You'll get prompted for a
                     filename once it's all done. It saves as a .c10 file.
                 </p>
                 <p>
@@ -185,6 +186,9 @@
         <input type="hidden" id="cassette-data" name="cassette-data" />
         <input type="hidden" id="filename" name="filename" />
     </form>
+
+    <div id="keyboard" class="hidden">
+    </div>
 
     <div id="debugger">
         <div id="header">
@@ -218,6 +222,63 @@
         });
         var charBuffer = [];
         var idx = 0;
+        var keys = [
+            [
+                { key: '1', ctrl: 'RUN', shift: '!' },
+                { key: '2', ctrl: 'CONT', shift: '"' },
+                { key: '3', ctrl: 'CSAVE', shift: '#' },
+                { key: '4', ctrl: 'CLOAD', shift: '$' },
+                { key: '5', ctrl: 'NEW', shift: '%' },
+                { key: '6', ctrl: 'LIST', shift: '&' },
+                { key: '7', ctrl: 'CLEAR', shift: '\'' },
+                { key: '8', ctrl: 'CLS', shift: '(' },
+                { key: '9', ctrl: 'PRINT', shift: ')' },
+                { key: '0', ctrl: 'COLOR', shift: 'inv' },
+                { key: ':', ctrl: 'END', shift: '*' },
+                { key: '-', ctrl: 'STOP', shift: '=' }
+            ],
+            [
+                { key: 'Q', ctrl: 'L.DEL.', shift: '', special: ' ' },
+                { key: 'W', ctrl: '⬆', shift: '', special: '▗' },
+                { key: 'E', ctrl: 'SET', shift: '', special: '▖' },
+                { key: 'R', ctrl: 'RESET', shift: '', special: '▄' },
+                { key: 'T', ctrl: 'READ', shift: '', special: '▝' },
+                { key: 'Y', ctrl: 'RESTORE', shift: '', special: '▍' },
+                { key: 'U', ctrl: 'FOR', shift: '' },
+                { key: 'I', ctrl: 'NEXT', shift: '' },
+                { key: 'O', ctrl: 'STEP', shift: '' },
+                { key: 'P', ctrl: 'INKEY$', shift: '' },
+                { key: '@', ctrl: 'INPUT', shift: '' },
+                { key: 'BREAK', ctrl: '', shift: '' }
+            ],
+            [
+                { key: 'A', ctrl: '⬅', shift: '', special: '▞ ' },
+                { key: 'S', ctrl: '➡', shift: '', special: '▟' },
+                { key: 'D', ctrl: 'GOSUB', shift: '', special: '▘' },
+                { key: 'F', ctrl: 'RETURN', shift: '', special: '▚' },
+                { key: 'G', ctrl: 'IF', shift: '', special: '▍' },
+                { key: 'H', ctrl: 'THEN', shift: '', special: '' },
+                { key: 'J', ctrl: 'GOTO', shift: '' },
+                { key: 'K', ctrl: 'SOUND', shift: '' },
+                { key: 'L', ctrl: 'PEEK', shift: '' },
+                { key: ';', ctrl: 'POKE', shift: '+' },
+                { key: 'ENTER', ctrl: '', shift: '' }
+            ],
+            [
+                { key: 'CONTROL', ctrl: '', shift: '', special: '' },
+                { key: 'Z', ctrl: '⬇', shift: '', special: '▙' },
+                { key: 'X', ctrl: 'SGN', shift: '', special: '▀' },
+                { key: 'C', ctrl: 'INT', shift: '', special: '▜' },
+                { key: 'V', ctrl: 'RND', shift: '', special: '▛' },
+                { key: 'B', ctrl: 'ABS', shift: '', special: '█' },
+                { key: 'N', ctrl: 'SIN', shift: '' },
+                { key: 'M', ctrl: 'COS', shift: '' },
+                { key: ',', ctrl: 'TAN', shift: '' },
+                { key: '.', ctrl: 'LOG', shift: '+' },
+                { key: '/', ctrl: 'SQR', shift: '' },
+                { key: 'SHIFT', ctrl: '', shift: '' }
+            ]
+        ];
 
         var historyTemplate = '<table> \
             <thead> \
@@ -251,6 +312,25 @@
             <% if (it.flags.h === 1) { %><div class="set">H</div><% } else { %><div>.</div><% } %> \
             </div>';
 
+        var keyTemplate = '\
+            <% it.forEach(row => { %> \
+                <div class="row"> \
+            <% row.forEach(item => { %> \
+            <% if (item.shift) { %> <div class="key shift"> <% } else { %> <div class="key"> <% } %> \
+            <% if (item.shift) { %> \
+                <span class="control"><%= item.ctrl %></span> \
+                <span><%= item.shift %></span> \
+                <span><%= item.key %></span> \
+            <% } else { %> \
+                <span class="control"><%= item.ctrl %></span> \
+                <span><%= item.key %></span> \
+                <% if (item.special) { %><span class="special"><%= item.special %></span><% } %> \
+            <% } %> \
+            </div> \
+            <% }) %> \
+            </div> \
+            <% }) %>';
+
         //jQuery.event.props.push('dataTransfer');
 
         $(document).bind('dragover dragend', function (e) {
@@ -268,6 +348,10 @@
         });
 
         $("#paste").bind("click", function (e) {
+        });
+
+        $("#kbd").bind("click", function (e) {
+            $("#keyboard").toggleClass("hidden");
         });
 
         $("#debug, #close").bind("click", function (e) {
@@ -300,6 +384,12 @@
             mc10.run();
 
             $("#debugger").draggable({ handle: "#header" });
+            $("#keyboard").draggable();
+
+            setTimeout(function () {
+                var html = Eta.render(keyTemplate, keys);
+                document.getElementById('keyboard').innerHTML = html;
+            }, 2000);
         });
 
         function debug() {
