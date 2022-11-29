@@ -197,6 +197,31 @@
                 <i class="fa-sharp fa-solid fa-rectangle-xmark"></i>
             </div>
         </div>
+        <div id="debugoptions">
+            <fieldset>
+                <legend>Radix</legend>
+                <div>
+                    <input type="radio" id="base2" name="radix" value="2" checked>
+                    <label for="base2">Base 2</label>
+                </div>
+                <div>
+                    <input type="radio" id="base4" name="radix" value="4">
+                    <label for="base4">Base 4</label>
+                </div>
+                <div>
+                    <input type="radio" id="base8" name="radix" value="8">
+                    <label for="base8">Base 8</label>
+                </div>
+                <div>
+                    <input type="radio" id="base10" name="radix" value="10">
+                    <label for="base10">Base 10</label>
+                </div>
+                <div>
+                    <input type="radio" id="base16" name="radix" value="16" checked="checked">
+                    <label for="base16">Base 16</label>
+                </div>
+            </fieldset>
+        </div>
         <div id="history">
         </div>
         <div id="debugcontrols">
@@ -222,6 +247,7 @@
         });
         var charBuffer = [];
         var idx = 0;
+        var radix = 16;
         var keys = [
             [
                 { key: '1', ctrl: 'RUN', shift: '!' },
@@ -243,7 +269,7 @@
                 { key: 'E', ctrl: 'SET', shift: '', special: '▖' },
                 { key: 'R', ctrl: 'RESET', shift: '', special: '▄' },
                 { key: 'T', ctrl: 'READ', shift: '', special: '▝' },
-                { key: 'Y', ctrl: 'RESTORE', shift: '', special: '▍' },
+                { key: 'Y', ctrl: 'RESTORE', shift: '', special: '▐' },
                 { key: 'U', ctrl: 'FOR', shift: '' },
                 { key: 'I', ctrl: 'NEXT', shift: '' },
                 { key: 'O', ctrl: 'STEP', shift: '' },
@@ -288,6 +314,10 @@
                     <th>PC</th> \
                     <th>Inst</th> \
                     <th>Flags</th> \
+                    <th>A</th> \
+                    <th>B</th> \
+                    <th>D</th> \
+                    <th>X</th> \
                 </tr> \
             </thead> \
             <tbody id="instructions"> \
@@ -295,9 +325,13 @@
                     <tr> \
                         <td class="icon"><div></div></td> \
                         <td class="cycle"><%= item.diffCycle %></td> \
-                        <td class="pc"><%= item.pc %></td> \
+                        <td class="pc"><%= item.pc.toString(16) %></td> \
                         <td class="inst"><%= item.inst %></td> \
                         <td class="flags"><%~ include("flags", item) %></td> \
+                        <td class="a"><%= item.a.toString(radix) %></td> \
+                        <td class="b"><%= item.b.toString(radix) %></td> \
+                        <td class="d"><%= item.d.toString(radix) %></td> \
+                        <td class="x"><%= item.x.toString(radix) %></td> \
                     </tr> \
                 <% }) %> \
             </tbody> \
@@ -385,6 +419,14 @@
 
             $("#debugger").draggable({ handle: "#header" });
             $("#keyboard").draggable();
+
+            // $('input[type=radio]').on('change', function() {
+            //     this.radix = $(this).val();
+            // });
+
+            $(document).on('change', '[type="radio"]', function () {
+                radix = $(this).val();
+            });
 
             setTimeout(function () {
                 var html = Eta.render(keyTemplate, keys);

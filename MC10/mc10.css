@@ -76,7 +76,7 @@ body {
     font-size: 12px;
 
     background: #fff;
-    width: 650px;
+    width: 750px;
 
     border: solid 2px #000;
     box-shadow: #0000008c 2px 2px 10px 0px;
@@ -84,7 +84,7 @@ body {
 
 #header {
     position: relative;
-    margin: 20px 0px 30px 0;
+    height: 50px;
 }
 
 #header h2 {
@@ -100,7 +100,7 @@ body {
 
 #history {
     height: 600px;
-    width: 650px;
+    width: 750px;
 
     overflow-y: scroll;
     overflow-x: hidden;
@@ -187,7 +187,6 @@ body {
 .special {
     background-color: #89dd35;
     margin-left: 3px;
-    border: solid 1px #000;
 }
 
 #keyboard>div:nth-child(2)>div:nth-child(12)>span:nth-child(2),
@@ -200,6 +199,26 @@ body {
 #keyboard .row .key.shift {
     flex-direction: column;
     font-size: 12px;
+}
+
+#debugoptions {
+    margin-bottom: 10px;
+}
+
+#debugoptions fieldset {
+    display: flex;
+}
+
+#debugoptions fieldset div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 20px;
+}
+
+#debugoptions fieldset div input {
+    padding: 0;
+    margin: 5px;
 }
 
 .hidden {

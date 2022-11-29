@@ -235,7 +235,7 @@ MC10.prototype = {
                 this.historyBuffer.push({
                     cycle: cnt,
                     diffCycle: this.cycleCount - this.historyBuffer[0]?.cycle,
-                    pc: this.cpu.REG_PC.toString(16),
+                    pc: this.cpu.REG_PC,
                     inst: this.cpu.disassemble(this.cpu.REG_PC),
                     flags: {
                         c: this.cpu.F_CARRY,
@@ -244,7 +244,11 @@ MC10.prototype = {
                         s: this.cpu.F_SIGN,
                         i: this.cpu.F_INTERRUPT,
                         h: this.cpu.F_HALFCARRY
-                    }
+                    },
+                    a: this.cpu.REG_A[0],
+                    b: this.cpu.REG_B[0],
+                    d: this.cpu.REG_D[0],
+                    x: this.cpu.REG_IP
                 });
                 var cycleCount = 0;
                 this.historyBuffer.slice().reverse().forEach(function(val, idx) {
