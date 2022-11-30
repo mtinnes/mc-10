@@ -68,7 +68,7 @@ body {
 
     position: absolute;
     left: 1000px;
-    top: 100px;
+    top: 20px;
 
     padding: 10px 20px 20px 20px;
 
@@ -130,7 +130,9 @@ body {
 }
 
 #keyboard {
-    width: 900px;
+    width: 700px;
+
+    padding: 50px;
 
     position: absolute;
     left: 967px;
@@ -140,8 +142,6 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-
-    padding: 20px;
 
     font-family: 'JetBrains Mono', monospace;
     font-size: 22px;
