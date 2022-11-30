@@ -124,6 +124,7 @@ var MC10 = function (opts) {
     this.lastFrameTime = 0;
 
     this.isDebugging = false;
+    this.isStepOut = false;
     this.onDebug = this.opts.onDebug;
     this.historyBuffer = new Array();
     this.historyBuffer.push = function() {
@@ -180,7 +181,6 @@ MC10.prototype = {
     run: function () {
         if (!this.isRunning) {
             this.isRunning = true;
-
             //var frameTick = this.frame.bind(this);
 
             requestAnimationFrame(this.frameTick);
@@ -209,6 +209,11 @@ MC10.prototype = {
         this.frame(true);
     },
 
+    stepOut: function () {
+        this.isStepOut = true;
+        this.run();
+    },
+
     frame: function (step) {
         if (!this.isRunning && !step) return;
 
@@ -225,10 +230,16 @@ MC10.prototype = {
         var cycles = 0;
         while ((cycles < breakon)) {
             var cnt = cpu.emulate();
-            this.cassette.advance(cnt);
-            cycles += cnt;
-            for (var i = 0; i < cnt; i++) {
-                this.vdg.updateAudio();
+            if (cnt === -1) { // break signaled from the cpu
+                this.pause();
+                this.isStepOut = false;
+                break;
+            } else {
+                this.cassette.advance(cnt);
+                cycles += cnt;
+                for (var i = 0; i < cnt; i++) {
+                    this.vdg.updateAudio();
+                }
             }
             
             if (this.isDebugging) {
@@ -248,7 +259,8 @@ MC10.prototype = {
                     a: this.cpu.REG_A[0],
                     b: this.cpu.REG_B[0],
                     d: this.cpu.REG_D[0],
-                    x: this.cpu.REG_IP
+                    x: this.cpu.REG_IP,
+                    s: this.cpu.REG_SP
                 });
                 var cycleCount = 0;
                 this.historyBuffer.slice().reverse().forEach(function(val, idx) {
@@ -497,8 +509,9 @@ MC10.prototype = {
 MC10.MC6803 = function (mc10) {
     this.mc10 = mc10;
 
+    this.isSuspended = false;
+
     this.idx = 0;
-    this.history = [];
 
     // Addressing modes
     this.DIRECT = 1;
@@ -636,9 +649,19 @@ MC10.MC6803.prototype = {
         this.irq2 = 0;
         this.pendingTCSR = 0;
         this.cycleCount = 0;
+
+        this.isSuspended = false;
+    },
+
+    suspend: function() {
+        this.isSuspended = true;
     },
 
     emulate: function () {
+        if (this.isSuspended) {
+            this.isSuspended = false;
+            return -1; // signal break
+        }
         var lastpc = this.REG_PC;
 
         if ((this.waiState & this.WAI_) != 0) {
@@ -647,7 +670,6 @@ MC10.MC6803.prototype = {
             this.checkTimer();
             return 1;
         }
-
 
 //      if (this.REG_PC>=0x60B6 && this.REG_PC<=0xE000 && this.mc10.debugger.value == "running...") {
 //          this.mc10.debugger.value = 
@@ -698,11 +720,6 @@ MC10.MC6803.prototype = {
                 this.cycleCount = (this.cycleCount + 1) & 0xffff;
                 this.checkTimer();
             }
-
-            //var cc = this.flagsToVariable();
-            //this.history.push({ OP: opcode.toString(16), last_PC: lastpc, PC: this.REG_PC, D: this.REG_D[0], X: this.REG_IP, S: this.REG_SP, CC: cc });
-            //this.idx++;
-
             this.cycleCount += this.extraCycles;
             this.extraCycles = 0;
 
@@ -1749,6 +1766,9 @@ MC10.MC6803.prototype = {
     },
     RTS: function () {
         this.REG_PC = this.popStack16();
+        if (this.mc10.isDebugging && this.mc10.isStepOut) {
+            this.suspend();
+        }
     },
     SBA: function () {
         this.REG_A[0] = this.subtract(this.REG_A[0], this.REG_B[0]);
@@ -3127,6 +3147,7 @@ MC10.MC6847.prototype = {
                 }
             }
         }
+        this.setBorderColor(altcolor);
     },
 
     updateSemiGraphics: function (pos, val) {
@@ -3168,7 +3189,6 @@ MC10.MC6847.prototype = {
         var data = this.imageData.data;
 
         for (var i = 0; i < 12; i++) {
-
             var cpos = 0x80;
             for (var j = 0; j < 8; j++) {
                 if (block[i] & cpos) {
@@ -3190,6 +3210,21 @@ MC10.MC6847.prototype = {
             screenX -= 16;
             screenY += 2;
         }
+
+        this.setBorderColor(8); // black
+    },
+
+    getPaletteHexColor: function (color) {    
+        var r = MC10.MC6847.Palette[color][0];
+        var g = MC10.MC6847.Palette[color][1];
+        var b = MC10.MC6847.Palette[color][2];
+        var value = 1<<24 | r<<16 | g<<8 | b;
+
+        return '#' + value.toString(16).substring(1);      
+    },
+
+    setBorderColor: function (color) {
+        this.screen.style.borderColor = this.getPaletteHexColor(color);
     },
 
     processAudio: function (e) {
@@ -3219,7 +3254,6 @@ MC10.MC6847.prototype = {
 
         this.sampleValue = sampleValue;
     },
-
 
     updateAudio: function () {
         this.abuf.push(this.toggleSpeaker);

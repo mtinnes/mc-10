@@ -226,7 +226,8 @@
         </div>
         <div id="debugcontrols">
             <button onclick="mc10.pause()"><i class="fa-sharp fa-solid fa-pause"></i> Break</button>
-            <button onclick="mc10.step()">Step</button>
+            <button onclick="mc10.step()">Step In</button>
+            <button onclick="mc10.stepOut()">Step Out</button>
             <button onclick="mc10.run()"><i class="fa-sharp fa-solid fa-play"></i> Run</button>
         </div>
     </div>
@@ -318,6 +319,7 @@
                     <th>B</th> \
                     <th>D</th> \
                     <th>X</th> \
+                    <th>S</th> \
                 </tr> \
             </thead> \
             <tbody id="instructions"> \
@@ -331,19 +333,20 @@
                         <td class="a"><%= item.a.toString(radix) %></td> \
                         <td class="b"><%= item.b.toString(radix) %></td> \
                         <td class="d"><%= item.d.toString(radix) %></td> \
-                        <td class="x"><%= item.x.toString(radix) %></td> \
+                        <td class="x"><%= item.x.toString(16) %></td> \
+                        <td class="s"><%= item.s.toString(16) %></td> \
                     </tr> \
                 <% }) %> \
             </tbody> \
         </table>';
 
         var flagsTemplate = '<div id="flags"> \
-            <% if (it.flags.c === 1) { %><div class="set">C</div><% } else { %><div>.</div><% } %> \
-            <% if (it.flags.o === 1) { %><div class="set">V</div><% } else { %><div>.</div><% } %> \
-            <% if (it.flags.z === 1) { %><div class="set">Z</div><% } else { %><div>.</div><% } %> \
-            <% if (it.flags.s === 1) { %><div class="set">N</div><% } else { %><div>.</div><% } %> \
-            <% if (it.flags.i === 1) { %><div class="set">I</div><% } else { %><div>.</div><% } %> \
             <% if (it.flags.h === 1) { %><div class="set">H</div><% } else { %><div>.</div><% } %> \
+            <% if (it.flags.i === 1) { %><div class="set">I</div><% } else { %><div>.</div><% } %> \
+            <% if (it.flags.s === 1) { %><div class="set">N</div><% } else { %><div>.</div><% } %> \
+            <% if (it.flags.z === 1) { %><div class="set">Z</div><% } else { %><div>.</div><% } %> \
+            <% if (it.flags.o === 1) { %><div class="set">V</div><% } else { %><div>.</div><% } %> \
+            <% if (it.flags.c === 1) { %><div class="set">C</div><% } else { %><div>.</div><% } %> \
             </div>';
 
         var keyTemplate = '\
