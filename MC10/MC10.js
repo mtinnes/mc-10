@@ -158,7 +158,7 @@ MC10.prototype = {
         this.cassette.reset();
 
         setInterval(function() {
-            if (this.isDebugging) {
+            if (this.isDebugging && this.isRunning) {
                 this.onDebug();
             }
         }.bind(this), 500)
@@ -198,11 +198,16 @@ MC10.prototype = {
             //clearInterval(this.cycleInterval);
             this.isRunning = false;
         }
+        this.onDebug();
     },
 
     toggleDebug: function () {
         this.isDebugging = !this.isDebugging;
         return this.isDebugging;
+    },
+
+    break: function () {
+        this.cpu.suspend();
     },
 
     step: function () {
@@ -229,25 +234,14 @@ MC10.prototype = {
         var breakon = this.clockRate / this.actualFrameRate;
         var cycles = 0;
         while ((cycles < breakon)) {
-            var cnt = cpu.emulate();
-            if (cnt === -1) { // break signaled from the cpu
-                this.pause();
-                this.isStepOut = false;
-                break;
-            } else {
-                this.cassette.advance(cnt);
-                cycles += cnt;
-                for (var i = 0; i < cnt; i++) {
-                    this.vdg.updateAudio();
-                }
-            }
-            
-            if (this.isDebugging) {
-                this.historyBuffer.push({
-                    cycle: cnt,
-                    diffCycle: this.cycleCount - this.historyBuffer[0]?.cycle,
-                    pc: this.cpu.REG_PC,
-                    inst: this.cpu.disassemble(this.cpu.REG_PC),
+
+            var len = this.historyBuffer.length;
+            if (this.isDebugging && (len === 0 || this.historyBuffer[len-1].diffCycle !== 0)) {
+                len = this.historyBuffer.push({
+                    cycle: 0,
+                    diffCycle: 0,
+                    pc: (this.cpu.REG_PC) & 0xffff,
+                    inst: this.cpu.disassemble((this.cpu.REG_PC) & 0xffff),
                     flags: {
                         c: this.cpu.F_CARRY,
                         o: this.cpu.F_OVERFLOW,
@@ -262,12 +256,45 @@ MC10.prototype = {
                     x: this.cpu.REG_IP,
                     s: this.cpu.REG_SP
                 });
+            }
+            var cnt = cpu.emulate();
+            if (cnt === -1) { // break signaled from the cpu
+                this.isStepOut = false;
+                this.pause();
+                break;
+            } else {
+                this.cassette.advance(cnt);
+                cycles += cnt;
+                for (var i = 0; i < cnt; i++) {
+                    this.vdg.updateAudio();
+                }
+            }
+            
+            if (this.isDebugging) {
+                this.historyBuffer[len-1] = {...this.historyBuffer[len-1],
+                    cycle: cnt,
+                    flags: {
+                        c: this.cpu.F_CARRY,
+                        o: this.cpu.F_OVERFLOW,
+                        z: this.cpu.F_ZERO,
+                        s: this.cpu.F_SIGN,
+                        i: this.cpu.F_INTERRUPT,
+                        h: this.cpu.F_HALFCARRY
+                    },
+                    a: this.cpu.REG_A[0],
+                    b: this.cpu.REG_B[0],
+                    d: this.cpu.REG_D[0],
+                    x: this.cpu.REG_IP,
+                    s: this.cpu.REG_SP
+                };
                 var cycleCount = 0;
                 this.historyBuffer.slice().reverse().forEach(function(val, idx) {
-                    if (idx === 0) val.diffCycle = 0; else
                     val.diffCycle = cycleCount -= val.cycle;
                 });
-                if (step) break;
+            }
+
+            if (step) {
+                this.cpu.suspend();
             }
         }
         this.vdg.paintFrame();
@@ -2722,7 +2749,6 @@ MC10.MC6847 = function (mc10) {
     this.graphicsMode = null;
     this.palette = null;
     this.audio = null;
-    this.canvas = null;
     this.screen = null;
     this.ctx = null;
     this.imageData = null;
@@ -2987,7 +3013,6 @@ MC10.MC6847.prototype = {
         this.graphicsMode = 0;
         this.palette = 0;
         this.screen = document.getElementById("screen");
-        this.canvas = document.getElementById("canvas");
         this.ctx = this.screen.getContext("2d");
         this.ctx.fillStyle = "black";
         this.ctx.fillRect(0, 0, 512, 384);
@@ -3289,9 +3314,9 @@ MC10.KBD.prototype = {
 
     init: function () {
         var self = this;
-        document.onkeyup = function (evt) { self.keyUp(evt); };
-        document.onkeydown = function (evt) { self.keyDown(evt); };
-        document.onkeypress = function (evt) { self.keyPress(evt) };
+        window.onkeyup = function (evt) { self.keyUp(evt); };
+        window.onkeydown = function (evt) { self.keyDown(evt); };
+        window.onkeypress = function (evt) { self.keyPress(evt) };
     },
 
     keyUp: function (evt) {
@@ -3378,8 +3403,8 @@ MC10.KBD.prototype = {
         } else {
             console.debug("Unrecognized keycode: " + ks);
         }
-        evt.preventDefault();
-        evt.stopPropagation();
+        //evt.preventDefault();
+        //evt.stopPropagation();
         this.mc10.vdg.audioCtx.resume(); // https://goo.gl/7K7WLu
         return false;
     },

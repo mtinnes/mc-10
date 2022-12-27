@@ -225,9 +225,9 @@
         <div id="history">
         </div>
         <div id="debugcontrols">
-            <button onclick="mc10.pause()"><i class="fa-sharp fa-solid fa-pause"></i> Break</button>
-            <button onclick="mc10.step()">Step In</button>
-            <button onclick="mc10.stepOut()">Step Out</button>
+            <button onclick="mc10.break(); debug();"><i class="fa-sharp fa-solid fa-pause"></i> Break</button>
+            <button onclick="mc10.step(); debug();">Step In</button>
+            <button onclick="mc10.stepOut(); debug();">Step Out</button>
             <button onclick="mc10.run()"><i class="fa-sharp fa-solid fa-play"></i> Run</button>
         </div>
     </div>
@@ -314,7 +314,7 @@
                     <th>Cycle</th> \
                     <th>PC</th> \
                     <th>Inst</th> \
-                    <th>Flags</th> \
+                    <th>Flags HINZVC</th> \
                     <th>A</th> \
                     <th>B</th> \
                     <th>D</th> \
@@ -325,6 +325,18 @@
             <tbody id="instructions"> \
                 <% it.forEach(item => { %> \
                     <tr> \
+                    <% if (item.diffCycle === 0) { %> \
+                        <td class="icon"><div></div></td> \
+                        <td class="cycle"><%= item.diffCycle %></td> \
+                        <td class="pc"><%= item.pc.toString(16) %></td> \
+                        <td class="inst"><%= item.inst %></td> \
+                        <td class="flags"><%~ include("flags-edit", item) %></td> \
+                        <td class="a"><input class="register" type="text" id="input-a" oninput="updateRegister(this)" value="<%= item.a.toString(radix) %>" /></td> \
+                        <td class="b"><input class="register" type="text" id="input-b" oninput="updateRegister(this)" value="<%= item.b.toString(radix) %>" /></td> \
+                        <td class="d"><input class="register" type="text" id="input-d" oninput="updateRegister(this)" value="<%= item.d.toString(radix) %>" /></td> \
+                        <td class="x"><input class="register" type="text" id="input-x" oninput="updateRegister(this)" value="<%= item.x.toString(16) %>" /></td> \
+                        <td class="s"><input class="register" type="text" id="input-s" oninput="updateRegister(this)" value="<%= item.s.toString(16) %>" /></td> \
+                    <% } else { %> \
                         <td class="icon"><div></div></td> \
                         <td class="cycle"><%= item.diffCycle %></td> \
                         <td class="pc"><%= item.pc.toString(16) %></td> \
@@ -335,6 +347,7 @@
                         <td class="d"><%= item.d.toString(radix) %></td> \
                         <td class="x"><%= item.x.toString(16) %></td> \
                         <td class="s"><%= item.s.toString(16) %></td> \
+                    <% } %> \
                     </tr> \
                 <% }) %> \
             </tbody> \
@@ -347,6 +360,15 @@
             <% if (it.flags.z === 1) { %><div class="set">Z</div><% } else { %><div>.</div><% } %> \
             <% if (it.flags.o === 1) { %><div class="set">V</div><% } else { %><div>.</div><% } %> \
             <% if (it.flags.c === 1) { %><div class="set">C</div><% } else { %><div>.</div><% } %> \
+            </div>';
+
+        var flagsEditTemplate = '<div id="flags"> \
+            <input class="flags-edit" type="checkbox" id="flag-h" value="true" onclick="updateFlag(this)" <% if (it.flags.h === 1) { %>checked="true"<% } %>" /> \
+            <input class="flags-edit" type="checkbox" id="flag-i" value="true" onclick="updateFlag(this)" <% if (it.flags.i === 1) { %>checked="true"<% } %>" /> \
+            <input class="flags-edit" type="checkbox" id="flag-s" value="true" onclick="updateFlag(this)" <% if (it.flags.s === 1) { %>checked="true"<% } %>" /> \
+            <input class="flags-edit" type="checkbox" id="flag-z" value="true" onclick="updateFlag(this)" <% if (it.flags.z === 1) { %>checked="true"<% } %>" /> \
+            <input class="flags-edit" type="checkbox" id="flag-o" value="true" onclick="updateFlag(this)" <% if (it.flags.o === 1) { %>checked="true"<% } %>" /> \
+            <input class="flags-edit" type="checkbox" id="flag-c" value="true" onclick="updateFlag(this)" <% if (it.flags.c === 1) { %>checked="true"<% } %>" /> \
             </div>';
 
         var keyTemplate = '\
@@ -370,11 +392,11 @@
 
         //jQuery.event.props.push('dataTransfer');
 
-        $(document).bind('dragover dragend', function (e) {
+        $("#screen").bind('dragover dragend', function (e) {
             return false;
         });
 
-        $(document).bind("keydown keypress", function (e) {
+        $("#screen").bind("keydown keypress", function (e) {
             if (e.which == 8 || e.which == 32) { // 8 == backspace, 32 == spacebar
                 e.preventDefault();
             }
@@ -423,12 +445,9 @@
             $("#debugger").draggable({ handle: "#header" });
             $("#keyboard").draggable();
 
-            // $('input[type=radio]').on('change', function() {
-            //     this.radix = $(this).val();
-            // });
-
             $(document).on('change', '[type="radio"]', function () {
                 radix = $(this).val();
+                debug();
             });
 
             setTimeout(function () {
@@ -440,9 +459,51 @@
         function debug() {
             if (Eta !== undefined) {
                 Eta.templates.define('flags', Eta.compile(flagsTemplate));
+                Eta.templates.define('flags-edit', Eta.compile(flagsEditTemplate));
 
                 var html = Eta.render(historyTemplate, mc10.historyBuffer.slice().reverse());
                 document.getElementById('history').innerHTML = html;
+            }
+        }
+
+        function updateFlag(ctl) {
+            if (ctl.id === 'flag-h') {
+                mc10.cpu.F_HALFCARRY = ctl.checked ? 1 : 0;
+            }
+            else if (ctl.id === 'flag-i') {
+                mc10.cpu.F_INTERRUPT = ctl.checked ? 1 : 0;
+            }
+            else if (ctl.id === 'flag-s') {
+                mc10.cpu.F_SIGN = ctl.checked ? 1 : 0;
+            }
+            else if (ctl.id === 'flag-z') {
+                mc10.cpu.F_ZERO = ctl.checked ? 1 : 0;
+            }
+            else if (ctl.id === 'flag-o') {
+                mc10.cpu.F_OVERFLOW = ctl.checked ? 1 : 0;
+            }
+            else if (ctl.id === 'flag-c') {
+                mc10.cpu.F_CARRY = ctl.checked ? 1 : 0;
+            }
+        }
+
+        function updateRegister(ctl) {
+            var tmp = parseInt(ctl.value, radix);
+
+            if (ctl.id === 'input-a') {
+                mc10.cpu.REG_A[0] = tmp & 0xff;
+            }
+            else if (ctl.id === 'input-b') {
+                mc10.cpu.REG_B[0] = tmp & 0xff;
+            }
+            else if (ctl.id === 'input-d') {
+                mc10.cpu.REG_D[0] = tmp & 0xffff;
+            }
+            else if (ctl.id === 'input-x') {
+                mc10.cpu.REG_IP = tmp & 0xffff;
+            }
+            else if (ctl.id === 'input-s') {
+                mc10.cpu.REG_SP = tmp & 0xffff;
             }
         }
 
