@@ -124,6 +124,15 @@ body {
     padding: 4px;
 }
 
+#history table tbody tr:nth-child(1) {
+    font-weight: bold;
+}
+
+input.register {
+    width: 30px;
+    z-index:1000;
+}
+
 #flags {
     display: flex;
     flex-direction: row;
