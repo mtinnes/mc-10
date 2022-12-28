@@ -130,12 +130,21 @@ body {
 
 input.register {
     width: 30px;
-    z-index:1000;
+    z-index: 1000;
+}
+
+input.flags-edit {
+    transform: scale(.8);
+    margin: 0;
 }
 
 #flags {
     display: flex;
     flex-direction: row;
+}
+
+#flags > div {
+    margin: 0 3px;
 }
 
 #keyboard {
