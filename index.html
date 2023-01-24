@@ -21,7 +21,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="mc10.css?v=6">
     <script src="//apis.google.com/js/platform.js" async defer></script>
-    <script src="//unpkg.com/eta" type="module" async defer></script>
+    <script src="//unpkg.com/eta@1.13.0/dist/browser/eta.min.js" type="module" async defer></script>
     <meta property="og:title" content="MC-10 Emulator in Javascript" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://mc-10.com/images/mc10_ss.jpg" />
@@ -401,6 +401,13 @@
                 e.preventDefault();
             }
         });
+
+        // $(document).keydown(function(e) {
+        //     if (e.ctrlKey) { // 8 == backspace, 32 == spacebar
+        //         e.preventDefault();
+        //         return false;
+        //     }
+        // });
 
         $("#reset").bind("click", function (e) {
             mc10.reset();
