@@ -12,8 +12,8 @@ body {
 
 #screen {
     position: absolute;
-    left: 128px;
-    top: 80px;
+    left: 75px;
+    top: 65px;
     width: 512px;
     height: 384px;
     z-index: -1;
@@ -22,15 +22,103 @@ body {
 
 #tv {
     position: relative;
-    width: 1000px;
-    height: 680px;
-    background: url('/images/old-television.png') no-repeat 0 0;
+    left: 40px;
+    top: 15px;
+    width: 893px;
+    height: 723px;
+}
+
+.tv {
+    position: relative;
+    z-index: 99;
+    width: 895px;
 }
 
 #controls {
-    position: absolute;
-    bottom: 40px;
-    left: 155px;
+    position: fixed;
+
+    padding: 0 40px;
+
+    left: 50%;
+    transform: translateX(-50%);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+
+    bottom: 0;
+    height: 120px;
+    background: #000;
+    border-radius: 20px 20px 0 0;
+}
+
+.hide {
+    display: none;
+}
+
+label.checkbox {
+    box-sizing: border-box;
+    color: #fff;
+    display: inline-block;
+    font-family: 'JetBrains Mono', Arial, sans-serif;
+    white-space: nowrap;
+}
+
+.button {
+    appearance: button;
+    background-color: #fff;
+    background-image: none;
+    border: 1px solid #000;
+    border-radius: 4px;
+    box-shadow: #fff 4px 4px 0 0, #000 4px 4px 0 1px;
+    box-sizing: border-box;
+    color: #000;
+    cursor: pointer;
+    display: inline-block;
+    font-family: 'JetBrains Mono', Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    margin: 0 5px 10px 0;
+    overflow: visible;
+    padding: 12px 40px;
+    text-align: center;
+    text-transform: none;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.button:focus {
+    text-decoration: none;
+}
+
+.button:hover {
+    text-decoration: none;
+}
+
+.button:active {
+    box-shadow: rgba(0, 0, 0, .125) 0 3px 5px inset;
+    outline: 0;
+}
+
+.button:not([disabled]):active {
+    box-shadow: #fff 2px 2px 0 0, #000 2px 2px 0 1px;
+    transform: translate(2px, 2px);
+}
+
+#controls input {
+    background: #fff;
+    color: #000;
+    padding: 5px;
+    font-family: 'JetBrains Mono', cursive;
+}
+
+input[type="file"] {
+    display: none;
 }
 
 #babble-container {
@@ -50,10 +138,11 @@ body {
 
 #about {
     font-size: 10px;
-    position: absolute;
-    bottom: -10px;
-    left: 350px;
-    color: #555;
+    color: #fff;
+    position: fixed;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
 }
 
 #wavcassette {
@@ -143,7 +232,7 @@ input.flags-edit {
     flex-direction: row;
 }
 
-#flags > div {
+#flags>div {
     margin: 0 3px;
 }
 
@@ -155,7 +244,8 @@ input.flags-edit {
     position: absolute;
     left: 967px;
     top: 111px;
-
+    z-index: 999;
+    
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -250,4 +340,34 @@ td.cycle {
 p {
     font-size: 12px;
     line-height: 16px;
+}
+
+.scanlines .overlay {
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 1;
+}
+
+.overlay::after {
+    position: absolute;
+    width: 650px;
+    height: 500px;
+    content: "";
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+}
+
+.overlay::before {
+    position: absolute;
+    width: 650px;
+    height: 500px;
+    content: " ";
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 2;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
 }
