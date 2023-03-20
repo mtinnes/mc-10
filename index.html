@@ -16,7 +16,7 @@
     <title>MC-10 Javascript Emulator</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
-    <script src="https://kit.fontawesome.com/5f89775b0b.js" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/e92cc6299f.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400&family=Press+Start+2P&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="mc10.css?v=6">
@@ -52,76 +52,83 @@
     </div>
     <div id="controls">
         <label for="goretro" class="checkbox">Retro</label>
-                <input id="goretro" name="goretro" type="checkbox" class="button" value="Go Retro" checked />
-                <input id="reset" class="button" type="button" value="Reset" />
-                <input type="button" id="record" class="button" value="Record" />
-                <input type="button" id="debug" class="button" value="Debug" />
-                <input type="button" id="kbd" class="button" value="Keyboard" />
-                <div id="file-chooser" class="button">
-                    <label>Choose File</label>
-                </div>
-                <input type="file" id="wavcassette" name="wavcassette" accept=".txt,.bas,.c10,.cas,.wav" />
-
-                <select id="cassetteList" class="button" name="cassetteList">
-                    <option value="">- Select Cassette -</option>
-                    <optgroup label="CoCo Ports">
-                        <option value="ML/SPACEASSAULT.c10">Space Assault [Type EXEC to start]</option>
-                        <option value="ML/GUNTUS.c10">Guntas [Type EXEC to start]</option>
-                    </optgroup>
-                    <optgroup label="Darren Atkinson">
-                        <option value="ML/ASTROIDS.c10">Asteroids [Type EXEC to start]</option>
-                        <option value="ML/MC_BOUNCY_BALL.c10">MC Bouncy Ball [Type EXEC to start]</option>
-                        <option value="ML/MC_FLAGON_BIRD.c10">MC Flagon Bird [Type EXEC to start]</option>
-                    </optgroup>
-                    <optgroup label="Greg Dionne">
-                        <option value="ML/PAC-Man.C10">Pac-Man [Type EXEC to start]</option>
-                        <option value="ML/TETRIS.C10">Tetris [Type EXEC to start]</option>
-                        <option value="ML/KALEIDOSCOPE.C10">Kaleidoscope [Type EXEC to start]</option>
-                        <option value="ML/RG2LIFE.C10">Conway's Life [Type EXEC to start]</option>
-                    </optgroup>
-                    <optgroup label="Tandy">
-                        <option value="ML/PINBALL.C10">Pinball [Type EXEC to start]</option>
-                        <option value="BASIC/MINICALC.C10">Minicalc [Type RUN to start]</option>
-                        <option value="BASIC/CHECKERS.C10">Checkers [Type RUN to start]</option>
-                        <option value="BASIC/BREAKOUT.C10">Breakout [Type RUN to start]</option>
-                        <option value="BASIC/EGGS.C10">Eggs [Type RUN to start]</option>
-                        <option value="BASIC/HORSE.C10">Horse [Type RUN to start]</option>
-                        <option value="BASIC/LANDER.C10">Lander [Type RUN to start]</option>
-                        <option value="BASIC/PONG.C10">Pong [Type RUN to start]</option>
-                    </optgroup>
-                    <optgroup label="Charles Pelosi">
-                        <option value="BASIC/DEMON_ATTACK.C10">Demon Attack [Type RUN to start]</option>
-                        <!--<option value="aster64.C10">Aster64 (Charles Pelosi)</option>-->
-                        <option value="BASIC/BLOCK_DROP.C10">Block Drop [Type RUN to start]</option>
-                        <option value="BASIC/DEFEND.C10">Defend [Type RUN to start]</option>
-                        <option value="BASIC/DRAGON_CASTLES.C10">Dragon Castles [Type RUN to start]</option>
-                        <option value="BASIC/FREEWAY.C10">Freeway [Type RUN to start]</option>
-                        <option value="BASIC/ROADRACE.C10">Roadrace [Type RUN to start]</option>
-                    </optgroup>
-                    <optgroup label="Jim Gerrie">
-                        <option value="BASIC/CRAWL.C10">Crawl [Type RUN to start]</option>
-                        <option value="BASIC/MAHJONG.C10">Mahjong [Type RUN to start]</option>
-                        <option value="BASIC/KLONDIKE.C10">Klondike [Type RUN to start]</option>
-                        <option value="BASIC/PITMAN.C10">Pitman [Type RUN to start]</option>
-                        <option value="BASIC/BERZERK.C10">Berzerk [Type RUN to start]</option>
-                        <option value="BASIC/CAVE3D.C10">Cave 3D [Type RUN to start]</option>
-                        <option value="BASIC/CHESS.C10">Chess [Type RUN to start]</option>
-                        <option value="BASIC/FROG.C10">Frog [Type RUN to start]</option>
-                        <option value="BASIC/INVADER.C10">Invader [Type RUN to start]</option>
-                        <option value="BASIC/LANDERJG.C10">Lander [Type RUN to start]</option>
-                        <option value="BASIC/ROVER.C10">Rover [Type RUN to start]</option>
-                        <option value="BASIC/PENGUINO.C10">Penguino [Type RUN to start]</option>
-                    </optgroup>
-                    <optgroup label="Other">
-                        <option value="BASIC/LEAPFROG.C10">Leapfrog [Type RUN to start]</option>
-                        <option value="BASIC/KALEIDOA.C10">Kaleidoscope [Type RUN to start]</option>
-                        <option value="ML/PUMPKIN.C10">Pumpkin Patch [Type EXEC to start]</option>
-                    </optgroup>
-                </select>
+        <input id="goretro" name="goretro" type="checkbox" class="button" value="Go Retro" checked />
+        <input id="reset" class="button" type="button" value="Reset" />
+        <input type="button" id="record" class="button" value="Record" />
+        <input type="button" id="debug" class="button" value="Debug" />
+        <input type="button" id="kbd" class="button" value="Keyboard" />
+        <select id="romList" class="button" name="romList">
+            <option value="">- Select ROM -</option>
+            <option value="microcolorbasic.js" selected>MicroColor Basic</option>
+            <option value="alice.js">Alice</option>
+            <!-- <option value="mcxbasic1.js">MCX</option>
+            <option value="mcxbasic2.js">MCX</option>
+            <option value="mcxbasic3.js">MCX</option> -->
+        </select>
+        <div id="file-chooser" class="button">
+            <label>Choose File</label>
+        </div>
+        <input type="file" id="wavcassette" name="wavcassette" accept=".txt,.bas,.c10,.cas,.wav" />
+        <select id="cassetteList" class="button" name="cassetteList">
+            <option value="">- Select Cassette -</option>
+            <optgroup label="CoCo Ports">
+                <option value="ML/SPACEASSAULT.c10">Space Assault [Type EXEC to start]</option>
+                <option value="ML/GUNTUS.c10">Guntas [Type EXEC to start]</option>
+            </optgroup>
+            <optgroup label="Darren Atkinson">
+                <option value="ML/ASTROIDS.c10">Asteroids [Type EXEC to start]</option>
+                <option value="ML/MC_BOUNCY_BALL.c10">MC Bouncy Ball [Type EXEC to start]</option>
+                <option value="ML/MC_FLAGON_BIRD.c10">MC Flagon Bird [Type EXEC to start]</option>
+            </optgroup>
+            <optgroup label="Greg Dionne">
+                <option value="ML/PAC-Man.C10">Pac-Man [Type EXEC to start]</option>
+                <option value="ML/TETRIS.C10">Tetris [Type EXEC to start]</option>
+                <option value="ML/KALEIDOSCOPE.C10">Kaleidoscope [Type EXEC to start]</option>
+                <option value="ML/RG2LIFE.C10">Conway's Life [Type EXEC to start]</option>
+            </optgroup>
+            <optgroup label="Tandy">
+                <option value="ML/PINBALL.C10">Pinball [Type EXEC to start]</option>
+                <option value="BASIC/MINICALC.C10">Minicalc [Type RUN to start]</option>
+                <option value="BASIC/CHECKERS.C10">Checkers [Type RUN to start]</option>
+                <option value="BASIC/BREAKOUT.C10">Breakout [Type RUN to start]</option>
+                <option value="BASIC/EGGS.C10">Eggs [Type RUN to start]</option>
+                <option value="BASIC/HORSE.C10">Horse [Type RUN to start]</option>
+                <option value="BASIC/LANDER.C10">Lander [Type RUN to start]</option>
+                <option value="BASIC/PONG.C10">Pong [Type RUN to start]</option>
+            </optgroup>
+            <optgroup label="Charles Pelosi">
+                <option value="BASIC/DEMON_ATTACK.C10">Demon Attack [Type RUN to start]</option>
+                <!--<option value="aster64.C10">Aster64 (Charles Pelosi)</option>-->
+                <option value="BASIC/BLOCK_DROP.C10">Block Drop [Type RUN to start]</option>
+                <option value="BASIC/DEFEND.C10">Defend [Type RUN to start]</option>
+                <option value="BASIC/DRAGON_CASTLES.C10">Dragon Castles [Type RUN to start]</option>
+                <option value="BASIC/FREEWAY.C10">Freeway [Type RUN to start]</option>
+                <option value="BASIC/ROADRACE.C10">Roadrace [Type RUN to start]</option>
+            </optgroup>
+            <optgroup label="Jim Gerrie">
+                <option value="BASIC/CRAWL.C10">Crawl [Type RUN to start]</option>
+                <option value="BASIC/MAHJONG.C10">Mahjong [Type RUN to start]</option>
+                <option value="BASIC/KLONDIKE.C10">Klondike [Type RUN to start]</option>
+                <option value="BASIC/PITMAN.C10">Pitman [Type RUN to start]</option>
+                <option value="BASIC/BERZERK.C10">Berzerk [Type RUN to start]</option>
+                <option value="BASIC/CAVE3D.C10">Cave 3D [Type RUN to start]</option>
+                <option value="BASIC/CHESS.C10">Chess [Type RUN to start]</option>
+                <option value="BASIC/FROG.C10">Frog [Type RUN to start]</option>
+                <option value="BASIC/INVADER.C10">Invader [Type RUN to start]</option>
+                <option value="BASIC/LANDERJG.C10">Lander [Type RUN to start]</option>
+                <option value="BASIC/ROVER.C10">Rover [Type RUN to start]</option>
+                <option value="BASIC/PENGUINO.C10">Penguino [Type RUN to start]</option>
+            </optgroup>
+            <optgroup label="Other">
+                <option value="BASIC/LEAPFROG.C10">Leapfrog [Type RUN to start]</option>
+                <option value="BASIC/KALEIDOSCOPE.C10">Kaleidoscope [Type RUN to start]</option>
+                <option value="ML/PUMPKIN.C10">Pumpkin Patch [Type EXEC to start]</option>
+            </optgroup>
+        </select>
     </div>
 
     <div id="about">
-        Copyright 2023 © <a href="https://github.com/mtinnes">
+        Copyright 2023 © <a href="https://www.linkedin.com/in/mtinnes/">
             Mike
             Tinnes
         </a>
@@ -143,12 +150,12 @@
                 into his childhood days of PEEK'ing and POKE'ing. Source is available on <a
                     href="https://github.com/mtinnes/mc-10">GitHub</a>.
             </p>
-            <h3>
+            <!-- <h3>
                 Shameless Plug
             </h3>
             <p>
-                <a href="https://www.catalystllc.biz">https://www.catalystllc.biz</a>
-            </p>
+                <a href="https://www.linkedin.com/in/mtinnes/">https://www.linkedin.com/in/mtinnes/</a>
+            </p> -->
             <p>
                 <fb:like href="https://mc-10.com" layout="standard" action="like" show_faces="true" share="true">
                 </fb:like>
@@ -161,34 +168,38 @@
                 <a class="github-button" href="https://github.com/mtinnes/mc-10"
                     aria-label="Star mtinnes/mc-10 on GitHub">Star</a>
             </p>
+
+            <p>
+                PS. Need to convert your WAV to C10? <a href="/wav2c10/index.html">Of course you do</a>.
+            </p>
         </div>
         <div class="babble">
             <h3>
                 How to do it...
             </h3>
             <p>
-                The keyboard is mapped directly to the original MC-10 <b>physical layout</b> so
-                you'll have to reference <a href="/images/139100-trs80.jpg" target="_blank">this</a>.
+                <i class="fa-solid fa-rectangle-vertical"></i> The keyboard is mapped directly to the original MC-10 <b>physical layout</b> so
+                you'll have to reference <a id="kbd_link" href="#">this</a>.
                 Use the file button to upload .C10 cassette files or select one from the list.
             </p>
             <p>
-                Use Shift+0 to toggle between upper and lowercase characters.
+                <i class="fa-sharp fa-solid fa-rectangle-vertical"></i> Use Shift+0 to toggle between upper and lowercase characters.
             </p>
             <p>
-                Use Control+0 to cycle the cursor amongst the various colors.
+                <i class="fa-sharp fa-solid fa-rectangle-vertical"></i> Use Control+0 to cycle the cursor amongst the various colors.
             </p>
             <p>
-                Use Shift+@ to pause a BASIC program. Press any other key to resume.
+                <i class="fa-sharp fa-solid fa-rectangle-vertical"></i> Use Shift+@ to pause a BASIC program. Press any other key to resume.
             </p>
             <p>
-                Use ESC to emulate the BREAK key.
+                <i class="fa-sharp fa-solid fa-rectangle-vertical"></i> Use ESC to emulate the BREAK key.
             </p>
             <p>
-                The "Record" button can be pressed before typing CSAVE or CSAVE*. You'll get prompted for a
+                <i class="fa-sharp fa-solid fa-rectangle-vertical"></i> The "Record" button can be pressed before typing CSAVE or CSAVE*. You'll get prompted for a
                 filename once it's all done. It saves as a .c10 file.
             </p>
             <p>
-                "Choose File" will start typing a text file in BASIC. If the file is a .c10 or a .wav file it will
+                <i class="fa-sharp fa-solid fa-rectangle-vertical"></i> "Choose File" will start typing a text file in BASIC. If the file is a .c10 or a .wav file it will
                 instead emulate reading it via cassette. (You will need to previously enter a CLOAD, CLOADM, or
                 CLOAD* command).
             </p>
@@ -252,6 +263,7 @@
     <script>window.jQuery || document.write('<script src="js/libs/jquery-1.7.1.min.js"><\/script>')</script>
     <script src="MC10.js?v=1" type="text/javascript"></script>
     <script type="text/javascript">
+
         var mc10 = new MC10({
             maxRam: 0x8fff,
             onDebug: function () {
@@ -421,14 +433,22 @@
         //     }
         // });
 
-        $("#reset").bind("click", function (e) {
-            mc10.reset();
+        // $("#reset").bind("click", function (e) {
+        //     mc10.reset();
+        // });
+
+        $("#reset").bind("mousedown", function (e) {
+            mc10.resetDown();
+        });
+
+        $("#reset").bind("mouseup", function (e) {
+            mc10.resetUp();
         });
 
         $("#paste").bind("click", function (e) {
         });
 
-        $("#kbd").bind("click", function (e) {
+        $("#kbd, #kbd_link").bind("click", function (e) {
             $("#keyboard").toggleClass("hidden");
         });
 
@@ -462,6 +482,12 @@
             loadCassette();
         });
 
+        $("#romList").bind("change", function (e) {
+            if ($('#romList').val() === '') return;
+
+            loadRom($('#romList').val());
+        });
+
         $("#record").bind("click", function (e) {
             mc10.record(function (buffer) {
                 var fname = prompt("Filename?");
@@ -470,8 +496,7 @@
         });
 
         $(document).ready(function () {
-            mc10.reset();
-            mc10.run();
+            loadRom('microcolorbasic.js');
 
             $("#debugger").draggable({ handle: "#header" });
             $("#keyboard").draggable();
@@ -586,6 +611,17 @@
                 filetype == 'c10' ? c10Reader :
                     txtReader;
             reader.readAsArrayBuffer(playfile);
+        }
+
+        function loadRom(romFile) {
+            return fetch('roms/' + romFile)
+                .then(response => response.text())
+                .then((text) => {
+                    mc10.ROM = eval(text);
+                    mc10.init();
+                    mc10.reset();
+                    mc10.run();
+                });
         }
 
         function loadCassette() {
