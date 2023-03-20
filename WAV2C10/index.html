@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang=en>
+
+<head>
+    <meta charset=utf-8>
+    <title>WAV to C10</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            color: #000;
+            padding: 5rem 1.25rem;
+            font-family: 'Press Start 2P', cursive;
+            background: url('/bg.jpg') repeat 0 0;
+        }
+
+
+        .container {
+            width: 60%;
+            max-width: 680px;
+            min-width: 37.5em;
+            padding: 3.12em 1.87em;
+            left: 50%;
+            top: 1em;
+            margin: 0 auto;
+        }
+
+        .upload-container {
+            position: relative;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+
+            width: 100%;
+            border: solid 2px #000;
+
+            outline: 2px dashed #000;
+            outline-offset: -10px;
+            transition: outline-offset .15s ease-in-out, background-color .15s linear;
+
+            background: #fff;
+            border: solid 2px #000;
+            padding: 30px;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        label {
+            display: block;
+            position: relative;
+            background-color: #025bee;
+            color: #ffffff;
+            box-shadow: #fff 4px 4px 0 0, #000 4px 4px 0 1px;
+            font-size: 1.1em;
+            text-align: center;
+            padding: 1em;
+            margin: 1em;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        #image-display {
+            position: relative;
+            width: 90%;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-evenly;
+            gap: 1.25em;
+            flex-wrap: wrap;
+        }
+
+        #image-display figure {
+            width: 45%;
+        }
+
+        #image-display img {
+            width: 100%;
+        }
+
+        #image-display figcaption {
+            font-size: 0.8em;
+            text-align: center;
+            color: #5a5861;
+        }
+
+        .active {
+            outline: 2px dashed #025bee;
+            outline-offset: -20px;
+        }
+
+        .active svg {
+            color: #fff !important;
+        }
+
+        #error {
+            text-align: center;
+            color: #ff3030;
+        }
+
+        .howto {
+            background: #fff;
+            border: solid 2px #000;
+            line-height: 1.2em;
+            padding: 10px;
+            margin-right: 20px;
+            margin-bottom: 10px;
+            padding: 20px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .howto h2 {
+            line-height: 2em;
+        }
+    </style>
+    <script src="https://kit.fontawesome.com/e92cc6299f.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400&family=Press+Start+2P&display=swap"
+        rel="stylesheet">
+    <script src="wav2c10.js"></script>
+    <script>(function (e, t, n) { var r = e.querySelectorAll("html")[0]; r.className = r.className.replace(/(^|\s)no-js(\s|$)/, "$1js$2") })(document, window, 0);</script>
+
+</head>
+
+<body>
+    <!-- <button id="play-btn">convert</button> -->
+
+    <div class="container">
+        <div class="howto">
+            <h2>WAV -> C10</h2>
+            <p>
+                This utility will convert audio recordings in WAV format into MC-10 compatible cassette (C10) files.
+            </p>
+        </div>
+
+        <div class="upload-container">
+            <svg xmlns="http://www.w3.org/2000/svg" width="150"
+                viewBox="0 0 576 512"><!--! Font Awesome Pro 6.3.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. -->
+                <path
+                    d="M528 80V432H472l-33.8-81.2L432 336H416 160 144l-6.2 14.8L104 432H48V80H528zM420 432H156l20-48H400l20 48zM48 32H0V80 432v48H48 528h48V432 80 32H528 48zM176 208a16 16 0 1 1 0 32 16 16 0 1 1 0-32zm64 16c0-5.5-.7-10.9-2-16H338c-1.3 5.1-2 10.5-2 16s.7 10.9 2 16H238c1.3-5.1 2-10.5 2-16zm224 0c0-35.3-28.7-64-64-64H176c-35.3 0-64 28.7-64 64s28.7 64 64 64H400c35.3 0 64-28.7 64-64zm-80 0a16 16 0 1 1 32 0 16 16 0 1 1 -32 0z" />
+            </svg>
+            <input type="file" id="upload-button" multiple />
+            <label for="upload-button">Choose -or- Drop WAV
+            </label>
+            <div id="error"></div>
+            <div id="image-display"></div>
+        </div>
+    </div>
+</body>
+
+
+<script>
+    let uploadButton = document.getElementById("upload-button");
+    let chosenImage = document.getElementById("chosen-image");
+    let fileName = document.getElementById("file-name");
+    let container = document.querySelector(".upload-container");
+    let error = document.getElementById("error");
+    let imageDisplay = document.getElementById("image-display");
+
+    const fileHandler = (file, name, type) => {
+
+        error.innerText = "";
+        let reader = new FileReader();
+        reader.readAsArrayBuffer(file);
+
+        reader.onload = async (event) => {
+            const content = event.target.result;
+            wav2c10.convert(content).then((program) => {
+                console.info('[✔] Audio Decoded!');
+                saveProgram(program);
+            }).catch((e) => {
+                error.innerText = 'Oops failed, try again?';
+            });
+        }
+
+        reader.onloadend = () => {
+            let imageContainer = document.createElement("figure");
+            imageContainer.innerHTML += `<figcaption>${name}</figcaption>`;
+            imageDisplay.appendChild(imageContainer);
+        };
+    };
+
+    //Upload Button
+    uploadButton.addEventListener("change", () => {
+        imageDisplay.innerHTML = "";
+        Array.from(uploadButton.files).forEach((file) => {
+            fileHandler(file, file.name, file.type);
+        });
+    });
+
+    container.addEventListener(
+        "dragenter",
+        (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            container.classList.add("active");
+        },
+        false
+    );
+
+    container.addEventListener(
+        "dragleave",
+        (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            container.classList.remove("active");
+        },
+        false
+    );
+
+    container.addEventListener(
+        "dragover",
+        (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            container.classList.add("active");
+        },
+        false
+    );
+
+    container.addEventListener(
+        "drop",
+        (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            container.classList.remove("active");
+            let draggedData = e.dataTransfer;
+            let files = draggedData.files;
+            imageDisplay.innerHTML = "";
+            Array.from(files).forEach((file) => {
+                fileHandler(file, file.name, file.type);
+            });
+        },
+        false
+    );
+
+    window.onload = () => {
+        error.innerText = "";
+    };
+
+    function saveProgram(program) {
+        var file = new Blob([program.binary], { type: "application/octet-stream;charset=utf-8" });
+        var a = document.createElement("a"), url = URL.createObjectURL(file);
+        a.href = url;
+        a.download = program.name + '.c10';
+        document.body.appendChild(a);
+        a.click();
+    }
+
+</script>
+
+</html>
