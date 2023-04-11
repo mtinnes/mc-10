@@ -17,7 +17,11 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <script src="https://kit.fontawesome.com/e92cc6299f.js" crossorigin="anonymous"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400&family=Press+Start+2P&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Yantramanav:wght@100;300;500;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="mc10.css?v=6">
     <script src="//apis.google.com/js/platform.js" async defer></script>
@@ -76,18 +80,49 @@
                 <option value="ML/GUNTUS.c10">Guntas [Type EXEC to start]</option>
             </optgroup>
             <optgroup label="Darren Atkinson">
-                <option value="ML/ASTROIDS.c10">Asteroids [Type EXEC to start]</option>
-                <option value="ML/MC_BOUNCY_BALL.c10">MC Bouncy Ball [Type EXEC to start]</option>
-                <option value="ML/MC_FLAGON_BIRD.c10">MC Flagon Bird [Type EXEC to start]</option>
+                <option value="ML/ASTROIDS.C10">Asteroids [Type EXEC to start]</option>
+                <option value="ML/MC_BOUNCY_BALL.C10">MC Bouncy Ball [Type EXEC to start]</option>
+                <option value="ML/MC_FLAGON_BIRD.C10">MC Flagon Bird [Type EXEC to start]</option>
             </optgroup>
             <optgroup label="Greg Dionne">
-                <option value="ML/PAC-Man.C10">Pac-Man [Type EXEC to start]</option>
+                <option value="ML/PAC-MAN.C10">Pac-Man [Type EXEC to start]</option>
                 <option value="ML/TETRIS.C10">Tetris [Type EXEC to start]</option>
                 <option value="ML/KALEIDOSCOPE.C10">Kaleidoscope [Type EXEC to start]</option>
                 <option value="ML/RG2LIFE.C10">Conway's Life [Type EXEC to start]</option>
+                <option value="ML/ASSEMBLER.C10">Assembler [Type EXEC to start]</option>
+                <!-- <option value="ML/BSORT.C10">B-Sort [Type EXEC to start]</option>
+                <option value="ML/QSORT.C10">Q-Sort [Type EXEC to start]</option>
+                <option value="ML/SADMUSIC.C10">Sad Music [Type EXEC to start]</option> -->
+            </optgroup>
+            <optgroup label="Inufuto">
+                <option value="ML/AERIAL.C10">Aerial [Type EXEC to start]</option>
+                <option value="ML/ASCEND.C10">Ascend [Type EXEC to start]</option>
+                <option value="ML/BATTLOT.C10">Battlot [Type EXEC to start]</option>
+                <option value="ML/BOOTSKELL.C10">Bootskel [Type EXEC to start]</option>
+                <option value="ML/CACORM.C10">Cacorm [Type EXEC to start]</option>
+                <option value="ML/CAVIT.C10">Cavit [Type EXEC to start]</option>
+                <option value="ML/GUNTUS.C10">Guntus [Type EXEC to start]</option>
+                <option value="ML/IMPETUS.C10">Impetus [Type EXEC to start]</option>
+                <option value="ML/LIFT.C10">Lift [Type EXEC to start]</option>
+                <option value="ML/MAZY.C10">Mazy [Type EXEC to start]</option>
+                <option value="ML/NEURAS.C10">Neruas [Type EXEC to start]</option>
+                <option value="ML/RUPTUS.C10">Ruptus [Type EXEC to start]</option>
+            </optgroup>
+            <optgroup label="Jonassen">
+                <option value="ML/GHSTRUSH.C10">Ghost Rush [Type EXEC to start]</option>
+                <option value="ML/PLASZIX_V1.c10">Plaszix v1 [Type EXEC to start]</option>
+                <option value="ML/PLASZIX_V2.c10">Plaszix v2 [Type EXEC to start]</option>
+                <option value="ML/ROTO10.c10">Roto10 [Type EXEC to start]</option>
+            </optgroup>
+            <optgroup label="Koelman">
+                <option value="ML/SHOGUN.C10">Shogun [Type EXEC to start]</option>
+            </optgroup>
+            <optgroup label="Ottery">
+                <option value="ML/RIVER.C10">River [Type EXEC to start]</option>
             </optgroup>
             <optgroup label="Tandy">
                 <option value="ML/PINBALL.C10">Pinball [Type EXEC to start]</option>
+                <option value="ML/MCCOM.C10">Compac Terminal [Type EXEC to start]</option>
                 <option value="BASIC/MINICALC.C10">Minicalc [Type RUN to start]</option>
                 <option value="BASIC/CHECKERS.C10">Checkers [Type RUN to start]</option>
                 <option value="BASIC/BREAKOUT.C10">Breakout [Type RUN to start]</option>
@@ -123,6 +158,8 @@
                 <option value="BASIC/LEAPFROG.C10">Leapfrog [Type RUN to start]</option>
                 <option value="BASIC/KALEIDOSCOPE.C10">Kaleidoscope [Type RUN to start]</option>
                 <option value="ML/PUMPKIN.C10">Pumpkin Patch [Type EXEC to start]</option>
+                <option value="ML/XMASRUSH.C10">Xmas Rush [Type EXEC to start]</option>
+                <option value="ML/SUKS.C10">SUKS [Type EXEC to start]</option>
             </optgroup>
         </select>
     </div>
@@ -136,14 +173,26 @@
 
     <div id="babble-container">
         <div class="babble">
-            <h2>
-                MC-10 Emulator
-            </h2>
+
+            <div class="logo">
+                <h2>
+                    Radio Shack
+                </h2>
+                <h3 class="inner-logo">
+                    <div class="rgb">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+                    MODEL MC-10
+                </h3>
+                <h4>TRS-80</h4>
+            </div>
+
             <p>
                 Yet another javascript emulator, this time for the legendary *ahem* <a
                     href="https://en.wikipedia.org/wiki/TRS-80_MC-10">
-                    MC-10 microcomputer
-                </a> by Tandy Corp!
+                    MC-10 microcomputer</a> by Tandy Corp!
             </p>
             <p>
                 Purely the result of one persons (me) sentimental journey
@@ -177,32 +226,48 @@
             <h3>
                 How to do it...
             </h3>
-            <p>
-                <i class="fa-solid fa-rectangle-vertical"></i> The keyboard is mapped directly to the original MC-10 <b>physical layout</b> so
-                you'll have to reference <a id="kbd_link" href="#">this</a>.
-                Use the file button to upload .C10 cassette files or select one from the list.
-            </p>
-            <p>
-                <i class="fa-sharp fa-solid fa-rectangle-vertical"></i> Use Shift+0 to toggle between upper and lowercase characters.
-            </p>
-            <p>
-                <i class="fa-sharp fa-solid fa-rectangle-vertical"></i> Use Control+0 to cycle the cursor amongst the various colors.
-            </p>
-            <p>
-                <i class="fa-sharp fa-solid fa-rectangle-vertical"></i> Use Shift+@ to pause a BASIC program. Press any other key to resume.
-            </p>
-            <p>
-                <i class="fa-sharp fa-solid fa-rectangle-vertical"></i> Use ESC to emulate the BREAK key.
-            </p>
-            <p>
-                <i class="fa-sharp fa-solid fa-rectangle-vertical"></i> The "Record" button can be pressed before typing CSAVE or CSAVE*. You'll get prompted for a
-                filename once it's all done. It saves as a .c10 file.
-            </p>
-            <p>
-                <i class="fa-sharp fa-solid fa-rectangle-vertical"></i> "Choose File" will start typing a text file in BASIC. If the file is a .c10 or a .wav file it will
-                instead emulate reading it via cassette. (You will need to previously enter a CLOAD, CLOADM, or
-                CLOAD* command).
-            </p>
+            <ul class="fa-ul">
+                <li>
+                    <span class="fa-li"><i class="fa-solid fa-rectangle-vertical"></i></span>
+                    The keyboard is mapped directly to the original MC-10
+                    <b>physical layout</b> so
+                    you'll have to reference <a id="kbd_link" href="#">this</a>.
+                    Use the file button to upload .C10 cassette files or select one from the list.
+                </li>
+                <li>
+                    <span class="fa-li"><i class="fa-solid fa-rectangle-vertical"></i></span>
+                    Use Shift+0 to toggle between upper and
+                    lowercase characters.
+                </li>
+                <li>
+                    <span class="fa-li"><i class="fa-solid fa-rectangle-vertical"></i></span>
+                    Use Control+0 to cycle the cursor amongst the
+                    various colors.
+                </li>
+                <li>
+                    <span class="fa-li"><i class="fa-solid fa-rectangle-vertical"></i></span>
+                    Use Shift+@ to pause a BASIC program. Press any
+                    other key to resume.
+                </li>
+                <li>
+                    <span class="fa-li"><i class="fa-solid fa-rectangle-vertical"></i></span>
+                    Use ESC to emulate the BREAK key.
+                </li>
+                <li>
+                    <span class="fa-li"><i class="fa-solid fa-rectangle-vertical"></i></span>
+                    The "Record" button can be pressed before typing
+                    CSAVE or CSAVE*. You'll get prompted for a
+                    filename once it's all done. It saves as a .c10 file.
+                </li>
+                <li>
+                    <span class="fa-li"><i class="fa-solid fa-rectangle-vertical"></i></span>
+                    "Choose File" will start typing a text file in
+                    BASIC. If the file is a .c10 or a .wav file it will
+                    instead emulate reading it via cassette. (You will need to previously enter a CLOAD, CLOADM, or
+                    CLOAD* command).
+                </li>
+
+            </ul>
         </div>
     </div>
     <form id="download-form" method="post" action="/SaveCassette.ashx">
@@ -594,7 +659,6 @@
                 audioContext.decodeAudioData(buffer, function (decoded) {
                     var typedArray = decoded.getChannelData(0);
                     mc10.cassette.playWav(decoded.sampleRate, typedArray);
-
                 });
             };
             var c10Reader = function (e) {
@@ -625,15 +689,15 @@
         }
 
         function loadCassette() {
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", "/cassettes/" + $("#cassetteList").val().toUpperCase(), true);
-            xhr.responseType = "arraybuffer";
-            xhr.onload = function (e) {
-                if (this.status == 200) {
-                    mc10.loadDirect(this.response);
-                }
-            };
-            xhr.send();
+            fetch('cassettes/' + $("#cassetteList").val().toUpperCase())
+                .then(response => response.arrayBuffer())
+                .then((data) => {
+                    mc10.reset();
+                    setTimeout(function () {
+                        mc10.loadDirect(data);
+                        mc10.reset();
+                    }, 1000);
+                });
         }
     </script>
     <script>
