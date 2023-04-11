@@ -101,6 +101,7 @@ var MC10 = function (opts) {
     this.opts = {
         maxRam: 0x8fff,
         preferredFrameRate: 60,
+        overclock: 1,
         onDebug: function () { console.debug('Debug handler not defined'); }
     };
     if (typeof opts != 'undefined') {
@@ -112,20 +113,21 @@ var MC10 = function (opts) {
         }
     }
     this.maxRam = this.opts.maxRam;
-    this.overclock = 1; //32;
-    this.clockRate = this.overclock * 890000;
+    this.clockRate = this.opts.overclock * 890000;
     this.frameTime = Math.round(1000 / this.opts.preferredFrameRate);
     this.actualFrameRate = 1000 / this.frameTime;
     this.cpu = new MC10.MC6803(this);
     this.vdg = new MC10.MC6847(this);
     this.keyboard = new MC10.KBD(this);
     this.cassette = new MC10.Cassette(this);
+    this.rs232 = new MC10.RS232C(this);
     this.frameTick = this.frame.bind(this, false);
     this.lastFrameTime = 0;
 
     this.isDebugging = false;
     this.isStepOut = false;
     this.onDebug = this.opts.onDebug;
+    this.debugTimer = undefined;
     this.historyBuffer = new Array();
     this.historyBuffer.push = function () {
         if (this.length >= 50) {
@@ -141,12 +143,12 @@ MC10.prototype = {
 
     ROM: [],
 
-    init: function() {
-
+    init: function () {
         this.vdg.init();
         this.cpu.init();
         this.keyboard.init();
         this.cassette.init();
+        this.rs232.init();
     },
 
     reset: function () {
@@ -154,8 +156,10 @@ MC10.prototype = {
         this.cpu.reset();
         this.keyboard.reset();
         this.cassette.reset();
+        this.rs232.reset();
 
-        setInterval(function () {
+        clearInterval(this.debugTimer);
+        this.debugTimer = setInterval(function () {
             if (this.isDebugging && this.isRunning) {
                 this.onDebug();
             }
@@ -260,12 +264,11 @@ MC10.prototype = {
                 this.isStepOut = false;
                 this.pause();
                 break;
-            } else {
-                this.cassette.advance(cnt);
-                cycles += cnt;
-                for (var i = 0; i < cnt; i++) {
-                    this.vdg.updateAudio();
-                }
+            }
+            this.cassette.advance(cnt);
+            cycles += cnt;
+            for (var i = 0; i < cnt; i++) {
+                this.vdg.updateAudio();
             }
 
             if (this.isDebugging) {
@@ -336,8 +339,8 @@ MC10.prototype = {
     },
 
     loadDirect: function (buffer) {
-
-        this.vdg.reset();
+        //this.reset();
+        //this.vdg.reset();
 
         var dv = new Uint8Array(buffer);
 
@@ -547,26 +550,35 @@ MC10.MC6803 = function (mc10) {
     this.IMMEDIATE = 5;
     this.INHERENT = 6;
 
-    this.INT_NONE = 0; // No interrupt required
-    this.INT_IRQ = 1; // Standard IRQ interrupt
-    this.INT_NMI = 2; // NMI interrupt
-    this.WAI_ = 8; // set when WAI is waiting for an interrupt
+    this.INT_NONE = 0;      // No interrupt required
+    this.INT_IRQ = 1;       // Standard IRQ interrupt
+    this.INT_NMI = 2;       // NMI interrupt
+    this.WAI_ = 8;          // Set when WAI is waiting for an interrupt
     this.SLP = 0x10;
-    this.IRQ_LINE = 0; // IRQ line number
-    this.TIN_LINE = 1; // P20/Tin Input Capture line (eddge sense)
-    this.CLEAR_LINE = 0; // clear (a fired, held or pulsed) line
-    this.ASSERT_LINE = 1; // assert an interrupt immediately
-    this.HOLD_LINE = 2; // hold interrupt line until enable is true
-    this.PULSE_LINE = 3; // pulse interrupt line for one instruction
+    this.IRQ_LINE = 0;      // IRQ line number
+    this.TIN_LINE = 1;      // P20/Tin Input Capture line (edge sense)
+    this.CLEAR_LINE = 0;    // Clear (a fired, held or pulsed) line
+    this.ASSERT_LINE = 1;   // Assert an interrupt immediately
+    this.HOLD_LINE = 2;     // Hold interrupt line until enable is true
+    this.PULSE_LINE = 3;    // Pulse interrupt line for one instruction
 
-    this.TCSR_OLVL = 0x01;
-    this.TCSR_IEDG = 0x02;
-    this.TCSR_ETOI = 0x04;
-    this.TCSR_EOCI = 0x08;
-    this.TCSR_EICI = 0x10;
-    this.TCSR_TOF = 0x20;
-    this.TCSR_OCF = 0x40;
-    this.TCSR_ICF = 0x80;
+    this.TCSR_OLVL = 0x01;  // Output Level
+    this.TCSR_IEDG = 0x02;  // Input Edge
+    this.TCSR_ETOI = 0x04;  // Enable Timer Overflow Interrupt
+    this.TCSR_EOCI = 0x08;  // Enable Output Compare Interrupt
+    this.TCSR_EICI = 0x10;  // Enable Input Capture Interrupt
+    this.TCSR_TOF = 0x20;   // Timer Overflow Flag
+    this.TCSR_OCF = 0x40;   // Output Compare Flag
+    this.TCSR_ICF = 0x80;   // Input Capture Flag
+
+    this.TRCSR_RDRF = 0x80; // Receive Data Register Full
+    this.TRCSR_ORFE = 0x40; // Over Run Framing Error
+    this.TRCSR_TDRE = 0x20; // Transmit Data Register Empty
+    this.TRCSR_RIE = 0x10;  // Receive Interrupt Enable
+    this.TRCSR_RE = 0x08;   // Receive Enable
+    this.TRCSR_TIE = 0x04;  // Transmit Interrupt Enable
+    this.TRCSR_TE = 0x02;   // Transmit Enable
+    this.TRCSR_WU = 0x01;   // Wake Up
 
     this.optable = null;
     this.cycleCount = null;
@@ -586,6 +598,7 @@ MC10.MC6803 = function (mc10) {
     this.extraCycles = null;
     this.irq2 = null;
     this.pendingTCSR = null;
+    this.latch09 = null;
 
     this.F_CARRY = null;
     this.F_OVERFLOW = null;
@@ -594,16 +607,13 @@ MC10.MC6803 = function (mc10) {
     this.F_INTERRUPT = null;
     this.F_HALFCARRY = null;
 
-    this.REG_ACC = null; // Accumulator
+    this.REG_ACC = null;    // Accumulator
     this.REG_A = null;
     this.REG_B = null;
     this.REG_D = null;
-    this.REG_SP = null; // Stack pointer
-    this.REG_IP = null; // INDEX pointer
-    this.REG_PC = null; // Program counter
-
-    //this.clearTOF = false;
-    //this.clearOCF = false;
+    this.REG_SP = null;     // Stack pointer
+    this.REG_IP = null;     // INDEX pointer
+    this.REG_PC = null;     // Program counter
 
     //this.init();
 };
@@ -626,6 +636,7 @@ MC10.MC6803.prototype = {
         this.extraCycles = 0;
         this.irq2 = 0;
         this.pendingTCSR = 0;
+        this.latch09 = 0;
 
         this.REG_ACC = new Uint8Array(this.accumBuffer);
         this.REG_D = new Uint16Array(this.accumBuffer);
@@ -662,6 +673,8 @@ MC10.MC6803.prototype = {
     reset: function () {
         this.REG_PC = (this.fetchMemory(0xfffe) << 8) + this.fetchMemory(0xffff);
 
+        this.variableToFlags(0xc0);
+
         this.SEI(); // IRQ disabled
 
         this.memory[0x0b] = 0xff; // output compare register defaults
@@ -675,6 +688,7 @@ MC10.MC6803.prototype = {
         this.irq2 = 0;
         this.pendingTCSR = 0;
         this.cycleCount = 0;
+        this.latch09 = 0;
 
         this.isSuspended = false;
     },
@@ -719,24 +733,32 @@ MC10.MC6803.prototype = {
         if (this.mc10.cassette.patchROM) {
             if (lastpc == 0xff22) {
                 this.F_CARRY = this.mc10.cassette.getC10bit();
-                opcode = 0x39;
+                opcode = 0x39; // RTS
             } else if (lastpc == 0xfdcf) {
                 this.mc10.cassette.stop();
             } else if (lastpc > 0xff2c && lastpc <= 0xff98) {
-                opcode = 0x39;
+                opcode = 0x39; // RTS
             } else if (lastpc == 0xfd03 && this.mc10.cassette.recording) {
                 this.mc10.cassette.recordC10byte(this.REG_A);
-                opcode = 0x39;
+                opcode = 0x39; // RTS
             } else if (lastpc == 0xfc8a && this.mc10.cassette.recording) {
                 this.mc10.cassette.saveRecord();
-                opcode = 0x39;
+                opcode = 0x39; // RTS
             }
         }
 
         if (this.mc10.keyboard.patchROM && lastpc == 0xf86c) {
             this.REG_A[0] = this.mc10.keyboard.quickread();
             this.TSTA();
-            opcode = 0x21;
+            opcode = 0x21; // BRN
+        }
+
+        if (this.mc10.rs232.patchROM && lastpc == 0xfa0c) {
+            this.mc10.rs232.write(this.REG_B[0]);
+        }
+
+        if (lastpc == 0xfff0) {
+            console.log('serial int');
         }
 
         if (opcode in this.optable) {
@@ -766,9 +788,14 @@ MC10.MC6803.prototype = {
             this.memory[0x08] |= this.TCSR_OCF; // set OCF (output compare flag)
             this.pendingTCSR |= this.TCSR_OCF;
             this.modifiedTCSR();
-            if (this.F_INTERRUPT == 0 && ((this.memory[0x08] & this.TCSR_EOCI) != 0)) {
-                this.takeOCI();
+
+            if (this.memory[0x01] & 0x02) { // if output on P21 is enabled, let's do it
+                this.memory[0x03] &= ~0x02;
+                this.memory[0x03] |= (this.memory[0x08] & this.TCSR_OLVL) << 1;
             }
+            // if (this.F_INTERRUPT == 0 && ((this.memory[0x08] & this.TCSR_EOCI) != 0)) {
+            //     this.takeOCI();
+            // }
         }
         /*
          * Timer overflow
@@ -777,8 +804,17 @@ MC10.MC6803.prototype = {
             this.memory[0x08] |= this.TCSR_TOF; // set TOF (timer overflow flag)
             this.pendingTCSR |= this.TCSR_TOF;
             this.modifiedTCSR();
-            if (this.F_INTERRUPT == 0 && ((this.memory[0x08] & this.TCSR_ETOI) != 0)) {
-                this.takeTOI();
+            // if (this.F_INTERRUPT == 0 && ((this.memory[0x08] & this.TCSR_ETOI) != 0)) {
+            //     this.takeTOI();
+            // }
+        }
+
+        if (this.irq2 & (this.TCSR_OCF | this.TCSR_TOF)) {
+            if (this.waiState & this.SLP) {
+                this.waiState &= ~this.SLP;
+            }
+            if (this.F_INTERRUPT == 0) {
+                this.checkIRQ2();
             }
         }
     },
@@ -799,53 +835,70 @@ MC10.MC6803.prototype = {
         }
         this.SEI();
 
-        this.REG_PC = vector;
+        this.REG_PC = (this.fetchMemory(vector) << 8) + this.fetchMemory(vector + 1);
         this.REG_PC &= 0xffff;
     },
 
-    //checkIRQLines: function () {
-    //    if (this.F_INTERRUPT == 0) {
-    //        if (this.irqState[this.IRQ_LINE] != this.CLEAR_LINE) {
-    //            this.interrupt(0xfff8);
-    //        } else {
-    //            this.checkIRQ2();
-    //        }
-    //    }
-    //},
+    checkIRQLines: function () {
+        if (this.irqState[this.IRQ_LINE] != this.CLEAR_LINE) {
+            if (this.waiState & this.SLP) {
+                this.waiState &= ~this.SLP;
+            }
+            if (this.F_INTERRUPT == 0) {
+                this.interrupt(0xfff8);
+            }
+        } else {
+            if (this.F_INTERRUPT == 0) {
+                this.checkIRQ2();
+            }
+        }
+    },
 
-    //checkIRQ2: function () {
-    //    //if ((this.irq2 & this.TCSR_ICF) != 0) {
-    //    //    this.takeICI();
-    //    //} else if ((this.irq2 & this.TCSR_OCF) != 0) {
-    //    //    this.takeOCI();
-    //    //} else if ((this.irq2 & this.TCSR_TOF) != 0) {
-    //    //    this.takeTOI();
-    //    //}
-    //},
+    checkIRQ2: function () {
+
+        if ((this.memory[0x08] & (this.TCSR_EICI | this.TCSR_ICF)) == (this.TCSR_EICI | this.TCSR_ICF)) {
+            this.takeICI();
+        }
+        else if ((this.memory[0x08] & (this.TCSR_EOCI | this.TCSR_OCF)) == (this.TCSR_EOCI | this.TCSR_OCF)) {
+            this.takeOCI();
+        }
+        else if ((this.memory[0x08] & (this.TCSR_ETOI | this.TCSR_TOF)) == (this.TCSR_ETOI | this.TCSR_TOF)) {
+            this.takeTOI();
+        }
+        // else if (((m_trcsr & (M6801_TRCSR_RIE | M6801_TRCSR_RDRF)) == (M6801_TRCSR_RIE | M6801_TRCSR_RDRF)) ||
+        //     ((m_trcsr & (M6801_TRCSR_RIE | M6801_TRCSR_ORFE)) == (M6801_TRCSR_RIE | M6801_TRCSR_ORFE)) ||
+        //     ((m_trcsr & (M6801_TRCSR_TIE | M6801_TRCSR_TDRE)) == (M6801_TRCSR_TIE | M6801_TRCSR_TDRE))) {
+        //     TAKE_SCI;
+        // }
+    },
 
     takeICI: function () {
-        this.interrupt(0x4209);
+        this.interrupt(0xfff6);
+        //this.interrupt(0x4209);
     },
 
     takeOCI: function () {
-        this.interrupt(0x4206);
+        this.interrupt(0xfff4);
+        //this.interrupt(0x4206);
     },
 
     takeTOI: function () {
-        this.interrupt(0x4203);
+        this.interrupt(0xfff2);
+        //this.interrupt(0x4203);
     },
 
     takeSCI: function () {
-        this.interrupt(0x4200);
+        this.interrupt(0xfff0);
+        //this.interrupt(0x4200);
     },
 
     takeTRAP: function () {
-        this.interrupt(0xF72E);
+        this.interrupt(0xffee);
+        //this.interrupt(0xF72E);
     },
 
     modifiedTCSR: function () {
-        //this.irq2 = (this.memory[0x08] & (this.memory[0x08] << 3)) & (this.TCSR_ICF | this.TCSR_OCF | this.TCSR_TOF);
-        this.irq2 = (this.memory[0x08] & (this.TCSR_ICF | this.TCSR_OCF | this.TCSR_TOF));
+        this.irq2 = (this.memory[0x08] & (this.memory[0x08] << 3)) & (this.TCSR_ICF | this.TCSR_OCF | this.TCSR_TOF);
     },
 
     inittable: function () {
@@ -2087,11 +2140,33 @@ MC10.MC6803.prototype = {
                     return this.memory[address];
 
                 case 0x03: //Port 2 Data Register (Printer/Cassette and Keyboard)
+
+                    // 6801 reference manual 2-3
+                    //
+                    // A common task in the design of an MC6801-based system is to determine the number of available 1/0 lines for·a particular operating mode.
+                    // A minimum of eight I/O lines are available using Port I regardless of the mode. The five lines of Port 2, however, are somewhat special.
+                    // While P20 is used I by the Timer input capture function, this does not prevent it from also being used for other purposes.
+                    // The remaining four lines, however, are dedicated to SCI or Timer functions if these functions are enabled.
+                    // If a particular line is not utilized for an SCI or Timer function, it can be used for either data input or output with one exception:
+                    // Bit I cannot be used as a data output line. The Port 2 bits and functions include:
+                    // • Port 2 Bit 1 -Used as Timer Output (OLVL) if Port 2 DDR bit I is set,
+                    // • Port 2 Bit 2 -Used as Serial-Clock-Out or External-Clock-In if CCI of Rate and Mode Control Register is set,
+                    // • Port 2 Bit 3 -Used as serial data input if RE of Transmit/Receive Data Register is set, and
+                    // • Port 2 Bit 4 -Used as serial data output if TE of Transmit/Receive Data Register is set.
+                    // While Port 2 Bit 0 can also be used for the Timer input capture function, its use is not a dedicated one.
+                    // Port 2 Bit 0 can be configured as either an input or an output depending upon the state of its bit in the Port 2 Data Direction Register.
+                    // The Programmable Timer input capture edge detector is a passive "listener" of this line and functions identically regardless of
+                    // whether the bit is defined as an input or an output. If configured as an input, an MPU read of the Port 2 Data Register will result in
+                    // reading the level at P20 regardless of whether or not the input capture function is being used.
+                    // Bit I of Port 2 can be used as a data input line but it cannot be used as a data output line. If its DDR bit is set,
+                    // the output pin is dedicated to the output compare function output level register. 
+
                     {
                         var enb = this.memory[0x01];
                         var ret =
                             (~this.memory[0x02] & 0x01 ? this.port2[0] : 0xff) &
                             (0x02 ? this.port2[1] : 0xff) &
+                            //(0x04 ? this.port2[2] : 0xff) &
                             (~this.memory[0x02] & 0x04 ? this.port2[2] : 0xff) &
                             (0x08 ? this.port2[3] : 0xff) &
                             (0x10 ? this.port2[4] : 0xff) &
@@ -2107,36 +2182,26 @@ MC10.MC6803.prototype = {
                     return this.memory[address];
 
                 case 0x08: //Timer Control and Status Register (TCSR)
-                    //this.clearTOF = this.memory[0x08] & this.TCSR_TOF;
-                    //this.clearOCF = this.memory[0x08] & this.TCSR_OCF;
                     this.pendingTCSR = 0;
                     return this.memory[address];
 
                 case 0x09: //Counter (High byte)
-                    if ((this.pendingTCSR & this.TCSR_TOF) == 0) {
+                    if (!(this.pendingTCSR & this.TCSR_TOF)) {
                         this.memory[0x08] &= ~(this.TCSR_TOF); // clear TOF flag on read
                         this.modifiedTCSR();
                     }
                     return (this.cycleCount >> 8) & 0xff;
+
                 case 0x0a: //Counter (Low byte)
                     return this.cycleCount & 0xff;
 
                 case 0x0b: //Output Compare Register (High byte)
+                    return (this.memory[address] >> 8) & 0xff;
                 case 0x0c: //Output Compare Register (Low byte)
-                    if (this.pendingTCSR & this.TCSR_OCF) {
-                        this.memory[0x08] &= ~(this.TCSR_OCF); // clear OCF flag on read
-                        this.modifiedTCSR();
-                    }
-                    //return (this.cycleCount >> 8) & 0xff;
-                    //if (this.pendingTCSR & this.TCSR_OCF) {
-                    //    this.memory[0x08] &= ~(this.TCSR_OCF); // clear OCF flag on read
-                    //    this.modifiedTCSR();
-                    //}
-                    //return this.cycleCount & 0xff;
-                    return this.memory[address];
+                    return this.memory[address] & 0xff;
 
                 case 0x0d: //Input Capture Register (High byte)
-                    if (this.pendingTCSR & this.TCSR_ICF) {
+                    if (!(this.pendingTCSR & this.TCSR_ICF)) {
                         this.memory[0x08] &= ~(this.TCSR_ICF); // clear ICF flag on read
                         this.modifiedTCSR();
                     }
@@ -2145,10 +2210,10 @@ MC10.MC6803.prototype = {
                 case 0x0f: //External Memory
                     return this.memory[address];
 
-                case 0x10: //Rate and Mode Control Register
+                case 0x10: //Rate and Mode Control Register (Write only)
                     break;
 
-                case 0x11: //Transmit/Recieve Control and Status Register
+                case 0x11: //Transmit/Recieve Control and Status Register (TRCSR)
                     return this.memory[address];
 
                 case 0x12: //Recieve Data Register
@@ -2271,85 +2336,102 @@ MC10.MC6803.prototype = {
         //is it an internal register?
         if (address <= 0x1f) {
             switch (address) {
-                case 0x00: //port 1 direction register
-                case 0x01: //port 2 direction register
+                case 0x00: //Port 1 Data Direction Register
+                case 0x01: //Port 2 Data Direction Register
                     this.memory[address] = value;
                     return;
 
-                case 0x02: //port 1 Data Register
+                case 0x02: //Port 1 Data Register (Keyboard Scan Strobe - Columns)
                     this.memory[address] = value;
                     return;
 
-                case 0x03: //port 2 Data Register
+                case 0x03: //Port 2 Data Register (Printer/Cassette and Keyboard)
+                    // var ddr = this.memory[0x01] & 0x1f;
+                    // if ((ddr != 0x1f) && ddr) {
+                    // }
                     this.memory[address] = value;
+
                     //
                     // printer emulation (push output to console)
+                    // each byte consists of STOP BIT, START BIT, 8 DATA BITS, STOP BIT
                     //
-                    this.printBuffer.push(value & 0x01);
-                    var len = this.printBuffer.length;
-                    if ((len % 11) == 0) {
-                        var char = 0x00;
-                        for (var i = 0; i < 8; i++) {
-                            char |= (this.printBuffer[len - 9 + i] ? 1 << i : 0);
-                        }
-                        console.log(String.fromCharCode(char));
-                    }
-                    clearTimeout(this.idleTimer);
-                    var self = this;
-                    this.idleTimer = setTimeout(function () {
-                        self.printBuffer = [];
-                    }, 100); // idle timer
+                    //if (this.memory[0xe8] === 254) { // Printer/Serial device selected
+                    // this.printBuffer.push(value & 0x01);
+                    // var len = this.printBuffer.length;
+                    // if ((len % 11) == 0) {
+                    //     var char = 0x00;
+                    //     for (var i = 0; i < 8; i++) {
+                    //         char |= (this.printBuffer[len - 9 + i] ? 1 << i : 0);
+                    //     }
+                    //     console.log(String.fromCharCode(char));
+                    //     this.printBuffer = [];
+                    // }
+                    //}
+                    // clearTimeout(this.idleTimer);
+                    // var self = this;
+                    // this.idleTimer = setTimeout(function () {
+                    //     self.printBuffer = [];
+                    // }, 100); // idle timer
                     return;
 
-                case 0x04: //external memory
-                case 0x05:
-                case 0x06:
-                case 0x07:
+                case 0x04: //External Memory
+                case 0x05: //External Memory
+                case 0x06: //External Memory
+                case 0x07: //External Memory
                     this.memory[address] = value;
                     return;
 
-                case 0x08: //timer control register
+                case 0x08: //Timer Control and Status Register (TCSR)
                     //   if (value > 31) //only bits 0-4 are writable
                     //       break;
                     this.memory[0x08] = (this.memory[0x08] & 0xe0) + (value & 0x1f);
                     this.pendingTCSR &= this.memory[0x08];
                     this.modifiedTCSR();
                     if (this.F_INTERRUPT == 0) {
-                        //                        this.checkIRQ2();
+                        this.checkIRQ2();
                     }
                     return;
 
-                case 0x09: //preset timer counter on write
-                    this.cycleCount = (0xfff8);
-                case 0x0a:
+                case 0x09: //Counter (High byte)
+                    this.cycleCount = (0xfff8); //preset timer counter on write
+                    this.latch09 = value & 0xff;
                     return;
 
-                case 0x0b: //output compare register
-                case 0x0c:
-                    //if (this.clearOCF) {
-                    //    this.memory[0x08] &= ~(0x40); // clear OCF flag on read
-                    //    this.clearOCF = false;
-                    //}
-                    if ((this.pendingTCSR & this.TCSR_OCF) == 0) {
+                case 0x0a: //Counter (Low byte)
+                    this.cycleCount = (this.latch09 << 8) | (value & 0xff);
+                    return;
+
+                case 0x0b: //Output Compare Register (High byte)
+                case 0x0c: //Output Compare Register (Low byte)
+                    if (!(this.pendingTCSR & this.TCSR_OCF)) {
                         this.memory[0x08] &= ~this.TCSR_OCF;
+                        this.modifiedTCSR();
                     }
+                    // if (this.clearOCF) {
+                    //     this.memory[0x08] &= ~this.TCSR_OCF;
+                    //     this.modifiedTCSR();
+                    // }
+                    // this.clearOCF = false; // reset clear cycle
 
+                    // if ((this.pendingTCSR & this.TCSR_OCF) == 0) {
+                    //     this.memory[0x08] &= ~this.TCSR_OCF;
+                    // }
                     this.memory[address] = value;
                     return;
 
-                case 0x0d: //input capture register (readonly)
-                case 0x0e:
-                    break;
+                case 0x0d: //Input Capture Register (High byte) (Readonly)
+                case 0x0e: //Input Capture Register (Low byte) (Readonly)
+                    return;
 
-                case 0x0f: //external memory
+                case 0x0f: //External Memory
                     this.memory[0x0f] = value;
                     return;
 
-                case 0x10:
-                case 0x11:
-                case 0x12:
-                case 0x13:
-                case 0x14:
+                case 0x10: //Rate and Mode Control Register (Write only)
+                case 0x11: //Transmit/Recieve Control and Status Register (TRCSR)
+                case 0x12: //Recieve Data Register
+                case 0x13: //Transmit Data Register
+                case 0x14: //RAM Control Register
 
                 default:
                     console.debug("Attempted to write to reserved internal register area." + address);
@@ -3446,12 +3528,64 @@ MC10.KBD.prototype = {
     }
 }
 
+MC10.RS232C = function (mc10) {
+    this.mc10 = mc10;
+    this.attached = true;
+}
+
+MC10.RS232C.prototype = {
+    init: function () {
+        this.patchROM = false;
+        this.readBuffer = new Array(0);
+        this.writeBuffer = new Array(0);
+        this.printBuffer = new Array(0);
+
+        this.online();
+    },
+
+    online: function () {
+        this.patchROM = true;
+        this.mc10.cpu.port2[2] &= ~0x04; // SERIAL IN state
+    },
+
+    offline: function () {
+        this.patchROM = false;
+        this.mc10.cpu.port2[2] |= 0x04; // SERIAL IN state
+    },
+
+    reset: function () {
+        //this.patchROM = false;
+    },
+
+    write: function (data) {
+
+        // printer emulation (push output to console)
+        // each byte consists of STOP BIT, START BIT, 8 DATA BITS, STOP BIT
+
+        this.writeBuffer.push(data & 0x01);
+        var len = this.writeBuffer.length;
+        if ((len % 11) == 0) {
+            var char = 0x00;
+            for (var i = 0; i < 8; i++) {
+                char |= (this.writeBuffer[len - 9 + i] ? 1 << i : 0);
+            }
+            console.log(String.fromCharCode(char));
+            this.printBuffer.push(String.fromCharCode(char));
+            this.writeBuffer = [];
+        }
+    },
+
+    onRead: function () {
+        return ~(0x04);
+    }
+}
+
 MC10.Cassette = function (mc10) {
     this.mc10 = mc10;
 }
 
 MC10.Cassette.prototype = {
-    init: function() {
+    init: function () {
         this.recording = false;
         this.sampleRate = 44100;
         this.sampleBuffer = new Float32Array(0);
@@ -3491,9 +3625,11 @@ MC10.Cassette.prototype = {
             }
         }
         if (sampleValue > 0) {
-            this.mc10.cpu.port2[4] = 0xff;
+            this.mc10.cpu.port2[4] |= (1 << 4);
+            //this.mc10.cpu.port2[4] = 0xff;
         } else {
-            this.mc10.cpu.port2[4] = 0xef;
+            this.mc10.cpu.port2[4] &= ~(1 << 4);
+            //this.mc10.cpu.port2[4] = 0xef;
         }
     },
 
