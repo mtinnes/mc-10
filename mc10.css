@@ -1,3 +1,12 @@
+@font-face {
+    font-family: 'Crystal Radio Kit';
+    src: url('fonts/CrystalRadioKit-Regular.woff2') format('woff2'),
+        url('fonts/CrystalRadioKit-Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 html {
     margin: 0;
     padding: 0;
@@ -135,6 +144,85 @@ input[type="file"] {
     border: solid 2px #000;
     padding: 10px;
     margin-right: 20px;
+}
+
+.babble h2 {
+    font-family: 'Crystal Radio Kit', cursive;
+    font-size: 40px;
+    padding: 0;
+    margin: 0;
+    letter-spacing: 2px;
+}
+
+.babble ul {
+    font-size: 12px;
+}
+
+.babble ul li {
+    margin-bottom: 10px;
+    line-height: 16px;
+}
+
+.logo {
+    font-family: 'Yantramanav', sans-serif;
+    color: #fff;
+
+    background-color: #000;
+    border-radius: 10px;
+    text-align: center;
+    width: 300px;
+
+    margin: 0 auto;
+    margin-bottom: 40px;
+}
+
+.logo h4 {
+    font-weight: 900;
+    font-size: 30px;
+    letter-spacing: 1px;
+    margin: 0;
+    padding: 0;
+}
+
+.inner-logo {
+    font-size: 20px;
+    font-weight: 300;
+
+    color: #000;
+
+    line-height: 1.1em;
+    letter-spacing: 5px;
+
+    background-color: #fff;
+
+    border-radius: 2px;
+    padding: 7px 0 0 0;
+    margin: 0 4px;
+}
+
+.inner-logo .rgb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.inner-logo .rgb div {
+    display: inline-block;
+    width: 70px;
+    height: 24px;
+}
+
+.inner-logo .rgb div:nth-child(1) {
+    background: #ff0000;
+}
+
+.inner-logo .rgb div:nth-child(2) {
+    background: #00FF00;
+}
+
+.inner-logo .rgb div:nth-child(3) {
+    background: #0000ff;
 }
 
 #about {
