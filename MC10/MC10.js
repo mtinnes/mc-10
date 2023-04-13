@@ -591,7 +591,6 @@ MC10.MC6803 = function (mc10) {
     this.port2Buffer = null;
     this.port2 = null;
     this.memmode = null;
-    this.printBuffer = null;
     this.irqState = null;
     this.waiState = null;
     this.nmiState = null;
@@ -629,7 +628,6 @@ MC10.MC6803.prototype = {
         this.port2Buffer = new ArrayBuffer(8);
         this.port2 = new Uint8Array(this.port2Buffer);
         this.cycleCount = 0;
-        this.printBuffer = new Array();
         this.irqState = new Array();
         this.waiState = 0;
         this.nmiState = 0;
@@ -754,7 +752,7 @@ MC10.MC6803.prototype = {
         }
 
         if (this.mc10.rs232.patchROM && lastpc == 0xfa0c) {
-            this.mc10.rs232.write(this.REG_B[0]);
+            //this.mc10.rs232.txd(this.REG_B[0]);
         }
 
         if (lastpc == 0xfff0) {
@@ -2161,20 +2159,37 @@ MC10.MC6803.prototype = {
                     // Bit I of Port 2 can be used as a data input line but it cannot be used as a data output line. If its DDR bit is set,
                     // the output pin is dedicated to the output compare function output level register. 
 
-                    {
-                        var enb = this.memory[0x01];
-                        var ret =
-                            (~this.memory[0x02] & 0x01 ? this.port2[0] : 0xff) &
-                            (0x02 ? this.port2[1] : 0xff) &
-                            //(0x04 ? this.port2[2] : 0xff) &
-                            (~this.memory[0x02] & 0x04 ? this.port2[2] : 0xff) &
-                            (0x08 ? this.port2[3] : 0xff) &
-                            (0x10 ? this.port2[4] : 0xff) &
-                            (0x20 ? this.port2[5] : 0xff) &
-                            (0x40 ? this.port2[6] : 0xff) &
-                            (~this.memory[0x02] & 0x80 ? this.port2[7] : 0xff);
-                        return ret;
-                    }
+                    var ret = 0xeb;
+
+                    ret &= (~this.memory[0x02] & 0x01) ? this.port2[0] : 0xff;
+                    ret &= (~this.memory[0x02] & 0x04) ? this.port2[2] : 0xff;
+                    ret &= (~this.memory[0x02] & 0x80) ? this.port2[7] : 0xff;
+
+                    // bit 2, rs232 input
+                    ret |= (this.mc10.rs232.rxd() ? 1 : 0) << 2;
+
+                    // bit 3, printer ots input
+                    ret |= (this.mc10.rs232.cts() ? 1 : 0) << 3;
+
+                    // bit 4, cassette input
+                    ret |= (this.mc10.cassette.sample() > 0 ? 1 : 0) << 4;
+
+                    return ret & 0xff;
+
+                // {
+                //     var enb = this.memory[0x01];
+                //     var ret =
+                //         (~this.memory[0x02] & 0x01 ? this.port2[0] : 0xff) &
+                //         (0x02 ? this.port2[1] : 0xff) &
+                //         //(0x04 ? this.port2[2] : 0xff) &
+                //         (~this.memory[0x02] & 0x04 ? this.port2[2] : 0xff) &
+                //         (0x08 ? this.port2[3] : 0xff) &
+                //         (0x10 ? this.port2[4] : 0xff) &
+                //         (0x20 ? this.port2[5] : 0xff) &
+                //         (0x40 ? this.port2[6] : 0xff) &
+                //         (~this.memory[0x02] & 0x80 ? this.port2[7] : 0xff);
+                //     return ret;
+                // }
                 case 0x04: //External Memory
                 case 0x05: //External Memory
                 case 0x06: //External Memory
@@ -2349,29 +2364,10 @@ MC10.MC6803.prototype = {
                     // var ddr = this.memory[0x01] & 0x1f;
                     // if ((ddr != 0x1f) && ddr) {
                     // }
+                    this.mc10.rs232.txd(value & 0x01);
+
                     this.memory[address] = value;
 
-                    //
-                    // printer emulation (push output to console)
-                    // each byte consists of STOP BIT, START BIT, 8 DATA BITS, STOP BIT
-                    //
-                    //if (this.memory[0xe8] === 254) { // Printer/Serial device selected
-                    // this.printBuffer.push(value & 0x01);
-                    // var len = this.printBuffer.length;
-                    // if ((len % 11) == 0) {
-                    //     var char = 0x00;
-                    //     for (var i = 0; i < 8; i++) {
-                    //         char |= (this.printBuffer[len - 9 + i] ? 1 << i : 0);
-                    //     }
-                    //     console.log(String.fromCharCode(char));
-                    //     this.printBuffer = [];
-                    // }
-                    //}
-                    // clearTimeout(this.idleTimer);
-                    // var self = this;
-                    // this.idleTimer = setTimeout(function () {
-                    //     self.printBuffer = [];
-                    // }, 100); // idle timer
                     return;
 
                 case 0x04: //External Memory
@@ -3530,12 +3526,53 @@ MC10.KBD.prototype = {
 
 MC10.RS232C = function (mc10) {
     this.mc10 = mc10;
-    this.attached = true;
+
+    this.STATE_MARK = 0x00;
+    this.STATE_START = 0x01;
+    this.STATE_DATA = 0x02;
+    this.STATE_STOP = 0x03;
+
+    this.BAUD_110 = (0x00);
+    this.BAUD_150 = (0x01);
+    this.BAUD_300 = (0x02);
+    this.BAUD_600 = (0x03);
+    this.BAUD_1200 = (0x04);
+    this.BAUD_2400 = (0x05);
+    this.BAUD_4800 = (0x06);
+    this.BAUD_9600 = (0x07);
+    this.BAUD_14400 = (0x08);
+    this.BAUD_19200 = (0x09);
+    this.BAUD_28800 = (0x0a);
+    this.BAUD_38400 = (0x0b);
+    this.BAUD_57600 = (0x0c);
+    this.BAUD_115200 = (0x0d);
+
+    this.DATABITS_5 = (0x00);
+    this.DATABITS_6 = (0x01);
+    this.DATABITS_7 = (0x02);
+    this.DATABITS_8 = (0x03);
+
+    this.PARITY_NONE = (0x00);
+    this.PARITY_ODD = (0x01);
+    this.PARITY_EVEN = (0x02);
+    this.PARITY_MARK = (0x03);
+    this.PARITY_SPACE = (0x04);
+
+    this.STOPBITS_0 = (0x00);
+    this.STOPBITS_1 = (0x01);
+    this.STOPBITS_1_5 = (0x02);
+    this.STOPBITS_2 = (0x03);
 }
 
 MC10.RS232C.prototype = {
     init: function () {
         this.patchROM = false;
+        this.state = this.STATE_MARK;
+        this.baud = this.BAUD_300;
+        this.dataBits = this.DATABITS_8;
+        this.parity = this.PARITY_NONE;
+        this.stopBits = this.STOPBITS_1;
+
         this.readBuffer = new Array(0);
         this.writeBuffer = new Array(0);
         this.printBuffer = new Array(0);
@@ -3545,38 +3582,93 @@ MC10.RS232C.prototype = {
 
     online: function () {
         this.patchROM = true;
-        this.mc10.cpu.port2[2] &= ~0x04; // SERIAL IN state
+        //this.mc10.cpu.port2[2] &= ~0x04; // SERIAL IN state
     },
 
     offline: function () {
         this.patchROM = false;
-        this.mc10.cpu.port2[2] |= 0x04; // SERIAL IN state
+        //this.mc10.cpu.port2[2] |= 0x04; // SERIAL IN state
     },
 
     reset: function () {
         //this.patchROM = false;
     },
 
-    write: function (data) {
+    // write functions
+    txd: function (data) { // Transmitted data
 
-        // printer emulation (push output to console)
+        // TP-10 printer emulation (push output to console)
         // each byte consists of STOP BIT, START BIT, 8 DATA BITS, STOP BIT
 
-        this.writeBuffer.push(data & 0x01);
-        var len = this.writeBuffer.length;
-        if ((len % 11) == 0) {
-            var char = 0x00;
-            for (var i = 0; i < 8; i++) {
-                char |= (this.writeBuffer[len - 9 + i] ? 1 << i : 0);
-            }
-            console.log(String.fromCharCode(char));
-            this.printBuffer.push(String.fromCharCode(char));
-            this.writeBuffer = [];
+        switch (this.state) {
+            case this.STATE_MARK:
+                if (!(data & 0x01)) { // wait for zero start bit
+                    this.state = this.STATE_DATA;
+                }
+                break;
+            case this.STATE_DATA:
+                this.writeBuffer.push(data & 0x01);
+                if (this.writeBuffer.length == 8) {
+                    this.state = this.STATE_STOP;
+                }
+                break;
+            case this.STATE_STOP:
+                var char = 0x00;
+                for (var i = 0; i < 8; i++) {
+                    char |= (this.writeBuffer[i] ? 1 << i : 0);
+                }
+                //console.log(String.fromCharCode(char));
+                this.printBuffer.push(String.fromCharCode(char));
+                this.state = this.STATE_MARK;
+                this.writeBuffer = [];
+                break;
         }
     },
 
-    onRead: function () {
-        return ~(0x04);
+    dtr: function (data) { // Data terminal ready
+    },
+
+    rts: function (data) { // Request to send
+    },
+
+    etc: function (data) { // Transmitter signal element timing (DTE)
+    },
+
+    spds: function (data) { // Data signal rate selector (DTE)
+    },
+
+
+    // read functions
+    rxd: function () { // Received data
+        return 0x00;
+    },
+
+    dcd: function () { // Data channel received line signal detector
+        return 0x00;
+    },
+
+    dsr: function () { // Data set ready
+        return 0x00;
+    },
+
+    ri: function () { // Calling indicator
+        return 0x00;
+    },
+
+    si: function () { // Data signal rate selector (DCE)
+        return 0x00;
+    },
+
+    cts: function () { // Ready for sending
+        return 0x01; // Emulate TP-10
+    },
+
+    rxc: function () { // Receiver signal element timing (DCE)
+        return 0x00;
+    },
+
+    txc: function () { // Transmitter signal element timing (DCE)
+        return 0x00;
     }
 }
 
@@ -3592,6 +3684,7 @@ MC10.Cassette.prototype = {
         this.sampleTime = 0;
         this.c10buffer = new Array(0);
         this.patchROM = false;
+        this.currSample = 0;
     },
 
     playWav: function (sampleRate, pcmSamples) {
@@ -3624,13 +3717,19 @@ MC10.Cassette.prototype = {
                 this.stop();
             }
         }
-        if (sampleValue > 0) {
-            this.mc10.cpu.port2[4] |= (1 << 4);
-            //this.mc10.cpu.port2[4] = 0xff;
-        } else {
-            this.mc10.cpu.port2[4] &= ~(1 << 4);
-            //this.mc10.cpu.port2[4] = 0xef;
-        }
+        this.currSample = sampleValue;
+
+        // if (sampleValue > 0) {
+        //     this.mc10.cpu.port2[4] |= (1 << 4);
+        //     //this.mc10.cpu.port2[4] = 0xff;
+        // } else {
+        //     this.mc10.cpu.port2[4] &= ~(1 << 4);
+        //     //this.mc10.cpu.port2[4] = 0xef;
+        // }
+    },
+
+    sample: function () {
+        return this.currSample;
     },
 
     // callback function for stop event
