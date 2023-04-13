@@ -61,7 +61,8 @@
         <input type="button" id="record" class="button" value="Record" />
         <input type="button" id="debug" class="button" value="Debug" />
         <input type="button" id="kbd" class="button" value="Keyboard" />
-        <select id="romList" class="button" name="romList">
+        <input type="button" id="print" class="button" value="Printer" />
+        <select id="romList" class="button" name="romList" style="display:none;">
             <option value="">- Select ROM -</option>
             <option value="microcolorbasic.js" selected>MicroColor Basic</option>
             <option value="alice.js">Alice</option>
@@ -276,6 +277,14 @@
     </form>
 
     <div id="keyboard" class="hidden">
+    </div>
+
+    <div id="printer" class="hidden">
+        <div class="toolbar">
+            TP-10
+        </div>
+        <textarea id="paper" readonly>
+        </textarea>
     </div>
 
     <div id="debugger">
@@ -517,6 +526,10 @@
             $("#keyboard").toggleClass("hidden");
         });
 
+        $("#print").bind("click", function (e) {
+            $("#printer").toggleClass("hidden");
+        });
+
         $("#file-chooser").bind("click", function (e) {
             $("#wavcassette").trigger("click");
         });
@@ -565,6 +578,7 @@
 
             $("#debugger").draggable({ handle: "#header" });
             $("#keyboard").draggable();
+            $("#printer").draggable();
 
             $(document).on('change', '[type="radio"]', function () {
                 radix = $(this).val();
@@ -575,6 +589,11 @@
                 var html = Eta.render(keyTemplate, keys);
                 document.getElementById('keyboard').innerHTML = html;
             }, 2000);
+
+            setInterval(function () {
+                $('#printer textarea').val(mc10.rs232.printBuffer.join(''));
+                //$('#printer textarea').scrollTop($('#printer textarea')[0].scrollHeight);
+            }, 500);
         });
 
         function debug() {
